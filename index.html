@@ -898,7 +898,7 @@ const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const HEADERS = {'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Prefer':'return=representation'};
 
 async function sbGet(table, params=''){
-  const r=await fetch(`${SUPA_URL}/rest/v1/${table}?${params}`,{headers:{...HEADERS,'Prefer':''}});
+  const r=await fetch(`${SUPA_URL}/rest/v1/${table}?${params}`,{headers:{...HEADERS,'Prefer':'','Range':'0-9999'}});
   if(!r.ok) throw new Error(await r.text());
   return r.json();
 }
@@ -985,9 +985,9 @@ async function loadAll(){
   showLoader('Conectando con Supabase…');
   try{
     const [lb,pr,hi]=await Promise.all([
-      sbGet('libros','select=*&order=id.asc&limit=5000'),
+      sbGet('libros','select=*&order=id.asc'),
       sbGet('prestamos','select=*&estado=neq.devuelto&order=id.asc'),
-      sbGet('historial','select=*&order=id.desc&limit=500'),
+      sbGet('historial','select=*&order=id.desc'),
     ]);
     libros    = lb.map(dbToLibro);
     prestamos = pr.map(dbToPrestamo);
@@ -1022,9 +1022,9 @@ function setupRealtime(){
   setInterval(async()=>{
     try{
       const [lb,pr,hi]=await Promise.all([
-        sbGet('libros','select=*&order=id.asc&limit=5000'),
+        sbGet('libros','select=*&order=id.asc'),
         sbGet('prestamos','select=*&estado=neq.devuelto&order=id.asc'),
-        sbGet('historial','select=*&order=id.desc&limit=500'),
+        sbGet('historial','select=*&order=id.desc'),
       ]);
       libros    =lb.map(dbToLibro);
       prestamos =pr.map(dbToPrestamo);
