@@ -1,0 +1,2155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biblioteca Aldea</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & BASE ─────────────────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+
+/* ── BRAND PALETTE – Light Theme ─────────────────────────────────────────── */
+:root{
+  /* Header / nav still use brand brown */
+  --brown-header: #4A3A2C;
+  --brown-nav:    #5C4A38;
+
+  /* Page & card surfaces – light */
+  --page-bg:      #F5F1EB;   /* warm cream page background */
+  --card-bg:      #FFFFFF;   /* white cards */
+  --card-alt:     #FAF7F2;   /* slightly warm white for alternating surfaces */
+  --surface-hover:#F0EBE3;   /* hover tint */
+
+  /* Accent – vivid yellow/gold */
+  --gold:         #F5C200;
+  --gold-dark:    #D4A500;
+  --gold-light:   #FEF5CC;   /* light gold tint */
+  --gold-bg:      #FDF0A0;
+
+  /* Logo colors */
+  --logo-orange:  #F5A623;
+  --logo-red:     #E8234A;
+
+  /* Status */
+  --success:      #2E9E47;
+  --success-bg:   #E8F7EC;
+  --warning:      #C99000;
+  --warning-bg:   #FEF5CC;
+  --danger:       #D42040;
+  --danger-bg:    #FDEAEE;
+  --info:         #2E7FC1;
+  --info-bg:      #E6F1FB;
+
+  /* Text */
+  --text-primary:  #1A1208;   /* near-black for body text */
+  --text-secondary:#4A3A2C;   /* brown-toned dark */
+  --text-muted:    #8A7A6A;   /* mid-tone muted */
+  --text-on-gold:  #1A1208;   /* text on gold buttons */
+  --text-on-dark:  #FFFFFF;   /* text on dark header */
+
+  /* Borders */
+  --border:        #DDD5C8;
+  --border-strong: #C8BFB0;
+
+  /* Layout */
+  --radius:    8px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+}
+
+body{
+  font-family:'Nunito Sans',system-ui,sans-serif;
+  background:var(--page-bg);
+  color:var(--text-primary);
+  min-height:100vh;
+}
+
+/* ── HEADER ──────────────────────────────────────────────────────────────── */
+header{
+  background:var(--brown-header);
+  border-bottom:3px solid var(--gold);
+  padding:.75rem 1.4rem;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:1rem;
+  flex-wrap:wrap;
+}
+.logo-area{display:flex;align-items:center;gap:.9rem}
+.logo-svg{width:52px;height:52px;flex-shrink:0}
+.logo-text-block{display:flex;flex-direction:column;line-height:1}
+.logo-colegio{font-family:'Nunito',sans-serif;font-size:.78rem;font-weight:700;color:var(--logo-orange);letter-spacing:.5px}
+.logo-aldea{font-family:'Nunito',sans-serif;font-size:1.1rem;font-weight:900;color:#FFFFFF;letter-spacing:1px}
+.logo-biblioteca{font-size:.65rem;color:rgba(255,255,255,.55);font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-top:.1rem}
+.header-meta{text-align:right}
+.header-date{font-size:.72rem;color:rgba(255,255,255,.55)}
+.header-stats{font-size:.78rem;color:var(--gold);font-weight:700}
+
+/* ── NAV ─────────────────────────────────────────────────────────────────── */
+nav{
+  background:var(--brown-header);
+  display:flex;
+  overflow-x:auto;
+  gap:2px;
+  padding:.3rem .6rem;
+  border-bottom:1px solid rgba(0,0,0,.15);
+}
+nav::-webkit-scrollbar{height:3px}
+nav::-webkit-scrollbar-thumb{background:var(--gold)}
+nav button{
+  padding:.55rem 1rem;
+  font-size:.8rem;
+  font-weight:700;
+  font-family:'Nunito',sans-serif;
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  color:rgba(255,255,255,.55);
+  border-radius:var(--radius);
+  white-space:nowrap;
+  transition:.15s;
+  letter-spacing:.3px;
+}
+nav button:hover{background:rgba(255,255,255,.1);color:#fff}
+nav button.active{background:var(--gold);color:var(--text-on-gold)}
+
+/* ── MAIN ────────────────────────────────────────────────────────────────── */
+main{max-width:1380px;margin:0 auto;padding:1.2rem 1rem}
+.vista{display:none}.vista.activa{display:block}
+
+/* ── STAT CARDS ──────────────────────────────────────────────────────────── */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.7rem;margin-bottom:1.2rem}
+.sc{
+  background:var(--card-bg);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  padding:.9rem 1.1rem;
+  position:relative;
+  overflow:hidden;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);
+}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.sc.verde::before{background:var(--success)}
+.sc.ambar::before{background:var(--gold)}
+.sc.rojo::before{background:var(--danger)}
+.sc.azul::before{background:var(--info)}
+.sc .l{font-size:.7rem;color:var(--text-muted);margin-bottom:.2rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px}
+.sc .v{font-size:1.55rem;font-weight:900;font-family:'Nunito',sans-serif}
+.sc.verde .v{color:var(--success)}
+.sc.ambar .v{color:var(--warning)}
+.sc.rojo  .v{color:var(--danger)}
+.sc.azul  .v{color:var(--info)}
+
+/* ── SEARCH BAR ──────────────────────────────────────────────────────────── */
+.barra{display:flex;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
+.barra input{
+  flex:1;min-width:200px;
+  padding:.52rem .9rem;
+  border:1.5px solid var(--border);
+  border-radius:var(--radius);
+  font-size:.85rem;
+  font-family:'Nunito Sans',sans-serif;
+  background:var(--card-bg);
+  color:var(--text-primary);
+  transition:.15s;
+}
+.barra input::placeholder{color:var(--text-muted)}
+.barra input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,194,0,.15)}
+.barra select{
+  padding:.52rem .8rem;
+  border:1.5px solid var(--border);
+  border-radius:var(--radius);
+  font-size:.82rem;
+  background:var(--card-bg);
+  color:var(--text-secondary);
+  font-family:'Nunito Sans',sans-serif;
+}
+.barra select:focus{outline:none;border-color:var(--gold)}
+
+/* ── BUTTONS ─────────────────────────────────────────────────────────────── */
+.btn{
+  display:inline-flex;align-items:center;gap:.35rem;
+  padding:.45rem .95rem;
+  border-radius:var(--radius);border:none;
+  font-size:.82rem;cursor:pointer;font-weight:700;
+  font-family:'Nunito',sans-serif;
+  transition:.15s;letter-spacing:.2px;
+}
+.btn-primary{background:var(--gold);color:var(--text-on-gold)}.btn-primary:hover{background:var(--gold-dark)}
+.btn-primary:disabled{background:#E8DFA0;color:#9A8E40;cursor:default}
+.btn-danger{background:var(--danger);color:#fff}.btn-danger:hover{background:#B01830}
+.btn-ghost{background:#fff;color:var(--text-secondary);border:1.5px solid var(--border)}.btn-ghost:hover{background:var(--surface-hover)}
+.btn-info{background:var(--info);color:#fff}.btn-info:hover{background:#2268A8}
+.btn-amber{background:var(--logo-orange);color:#fff}.btn-amber:hover{background:#D4891A}
+.btn-success{background:var(--success);color:#fff}.btn-success:hover{background:#267A39}
+
+/* ── TABLE ───────────────────────────────────────────────────────────────── */
+.tbl-wrap{overflow-x:auto;border-radius:var(--radius-lg);border:1px solid var(--border);box-shadow:0 1px 6px rgba(0,0,0,.06)}
+table{width:100%;border-collapse:collapse;background:var(--card-bg);font-size:.8rem;min-width:1100px}
+thead{background:var(--brown-header)}
+th{
+  padding:.65rem .85rem;text-align:left;
+  font-weight:800;color:rgba(255,255,255,.75);
+  font-size:.68rem;text-transform:uppercase;
+  letter-spacing:.8px;border-bottom:2px solid var(--gold);
+  white-space:nowrap;font-family:'Nunito',sans-serif;
+}
+td{
+  padding:.6rem .85rem;
+  border-bottom:1px solid var(--border);
+  vertical-align:middle;max-width:180px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:var(--text-secondary);
+}
+td:nth-child(3){color:var(--text-primary);font-weight:700}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--card-alt)}
+
+/* ── BADGES ──────────────────────────────────────────────────────────────── */
+.badge{display:inline-flex;padding:.2rem .55rem;border-radius:20px;font-size:.68rem;font-weight:800;white-space:nowrap;font-family:'Nunito',sans-serif;letter-spacing:.3px}
+.bd-disp{background:var(--success-bg);color:var(--success);border:1px solid #A8DDB5}
+.bd-prest{background:var(--warning-bg);color:var(--warning);border:1px solid #E8D070}
+.bd-agot{background:var(--danger-bg);color:var(--danger);border:1px solid #F0AABB}
+.chip{display:inline-flex;padding:.13rem .5rem;border-radius:20px;font-size:.67rem;font-weight:700;background:var(--info-bg);color:var(--info);border:1px solid #BDDAF0}
+.chip-g{background:var(--gold-light);color:#8A6A00;border:1px solid #E8D080}
+
+/* ── MODALS ──────────────────────────────────────────────────────────────── */
+.modal-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.4);z-index:100;
+  align-items:flex-start;justify-content:center;
+  padding:2rem 1rem;overflow-y:auto;
+  backdrop-filter:blur(3px);
+}
+.modal-overlay.abierto{display:flex}
+.modal{
+  background:var(--card-bg);
+  border:1px solid var(--border);
+  border-top:3px solid var(--gold);
+  border-radius:var(--radius-xl);
+  padding:1.6rem;width:100%;max-width:540px;
+  box-shadow:0 12px 40px rgba(0,0,0,.15);
+}
+.modal h2{font-size:.95rem;font-weight:800;margin-bottom:1rem;color:var(--text-primary);font-family:'Nunito',sans-serif;letter-spacing:.3px}
+
+/* ── FORM GRID ───────────────────────────────────────────────────────────── */
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:.65rem}
+.fi{display:flex;flex-direction:column;gap:.3rem}
+.fi.full{grid-column:1/-1}
+.fi label{font-size:.72rem;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;font-family:'Nunito',sans-serif}
+.fi input,.fi select,.fi textarea{
+  padding:.5rem .75rem;
+  border:1.5px solid var(--border);
+  border-radius:var(--radius);
+  font-size:.84rem;
+  font-family:'Nunito Sans',sans-serif;
+  background:#fff;
+  color:var(--text-primary);
+  transition:.15s;
+}
+.fi input:focus,.fi select:focus,.fi textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,194,0,.12)}
+.fi textarea{resize:vertical;min-height:65px}
+.mf{display:flex;gap:.5rem;justify-content:flex-end;margin-top:1rem;padding-top:.9rem;border-top:1px solid var(--border)}
+
+/* ── ALERTS ──────────────────────────────────────────────────────────────── */
+.alerta{padding:.6rem .9rem;border-radius:var(--radius);font-size:.83rem;margin-bottom:.8rem;font-weight:600;border-left:3px solid}
+.al-ok{background:var(--success-bg);color:var(--success);border-color:var(--success)}
+.al-err{background:var(--danger-bg);color:var(--danger);border-color:var(--danger)}
+.al-info{background:var(--info-bg);color:var(--info);border-color:var(--info)}
+
+/* ── EMPTY STATE ─────────────────────────────────────────────────────────── */
+.empty{text-align:center;padding:2.5rem;color:var(--text-muted);font-size:.9rem}
+
+/* ── LOAN CARDS ──────────────────────────────────────────────────────────── */
+.pc{
+  background:var(--card-bg);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  padding:.9rem 1.1rem;
+  margin-bottom:.55rem;
+  display:flex;align-items:center;gap:1rem;flex-wrap:wrap;
+  box-shadow:0 1px 4px rgba(0,0,0,.05);
+  transition:.15s;
+}
+.pc:hover{border-color:var(--border-strong)}
+.pc.mora{border-color:var(--danger);border-left:3px solid var(--danger)}
+
+/* ── HISTORY ITEMS ───────────────────────────────────────────────────────── */
+.hi{
+  background:var(--card-bg);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:.85rem 1rem;
+  margin-bottom:.5rem;
+  font-size:.82rem;
+  box-shadow:0 1px 3px rgba(0,0,0,.04);
+}
+
+/* ── PAGINATION ──────────────────────────────────────────────────────────── */
+.pag{display:flex;align-items:center;gap:.4rem;padding:.5rem 0;font-size:.8rem;flex-wrap:wrap}
+.pag button{
+  padding:.3rem .65rem;
+  border:1.5px solid var(--border);
+  border-radius:var(--radius);
+  background:var(--card-bg);
+  color:var(--text-secondary);
+  cursor:pointer;font-size:.76rem;font-family:'Nunito',sans-serif;font-weight:700;
+  transition:.15s;
+}
+.pag button:hover{background:var(--surface-hover);color:var(--text-primary)}
+.pag button.cur{background:var(--gold);color:var(--text-on-gold);border-color:var(--gold)}
+
+/* ── IMPORT DROP ZONE ────────────────────────────────────────────────────── */
+.drop-zone{
+  border:2px dashed var(--border-strong);
+  border-radius:var(--radius-lg);
+  padding:2.5rem;text-align:center;cursor:pointer;
+  transition:.2s;background:var(--card-alt);
+}
+.drop-zone:hover,.drop-zone.over{border-color:var(--gold);background:var(--gold-light)}
+.drop-zone .icon{font-size:2.5rem;margin-bottom:.5rem}
+.drop-zone p{color:var(--text-muted);font-size:.88rem}
+.drop-zone strong{color:var(--text-secondary)}
+.import-log{
+  background:var(--card-alt);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:1rem;margin-top:1rem;font-size:.82rem;
+  max-height:200px;overflow-y:auto;color:var(--text-secondary);
+}
+
+/* ── PANEL CARDS ─────────────────────────────────────────────────────────── */
+.panel{
+  background:var(--card-bg);
+  border:1px solid var(--border);
+  border-radius:var(--radius-xl);
+  padding:1.5rem;
+  margin-bottom:1rem;
+  box-shadow:0 1px 6px rgba(0,0,0,.06);
+}
+.panel h2{
+  font-size:.9rem;font-weight:800;margin-bottom:1rem;
+  color:var(--text-primary);font-family:'Nunito',sans-serif;
+  border-left:3px solid var(--gold);padding-left:.7rem;
+}
+
+/* ── BUSCADOR (user-facing search) ───────────────────────────────────────── */
+.buscador-box{
+  background:var(--card-bg);
+  border:2px solid var(--gold);
+  border-radius:var(--radius-xl);
+  padding:1.6rem 1.8rem;
+  box-shadow:0 4px 20px rgba(0,0,0,.08);
+  overflow:hidden;
+  width:100%;
+}
+.buscador-box h2{
+  text-align:center;
+  font-family:'Nunito',sans-serif;
+  font-size:1.2rem;font-weight:900;
+  color:var(--text-primary);
+  letter-spacing:1.5px;text-transform:uppercase;
+  margin-bottom:1.3rem;
+}
+.buscador-box h2 span{color:var(--logo-orange)}
+.bus-table{width:100%;border-collapse:collapse;font-size:.88rem;table-layout:fixed}
+.bus-table td{border:1px solid var(--border);padding:0;vertical-align:middle}
+.bus-table .lbl{
+  background:var(--gold-light);
+  padding:.45rem .85rem;
+  font-weight:800;text-align:right;
+  white-space:nowrap;
+  width:15%;
+  color:#7A5E00;
+  font-family:'Nunito',sans-serif;font-size:.8rem;
+  letter-spacing:.3px;
+  vertical-align:middle;
+}
+.bus-table .inp-cell{
+  background:#F7F5F0;
+  border-left:1px solid var(--border);
+}
+.bus-table input{
+  width:100%;border:none;
+  padding:.52rem .85rem;font-size:.88rem;
+  outline:none;
+  background:transparent;
+  color:var(--text-primary);
+  font-family:'Nunito Sans',sans-serif;
+  display:block;
+  box-sizing:border-box;
+}
+.bus-table input::placeholder{color:#C0B8A8}
+.bus-table tr:focus-within .inp-cell{background:#FFFDE8;border-left-color:var(--gold)}
+.bus-table tr:focus-within .lbl{background:#FEF0A0}
+.bus-btns{display:flex;justify-content:center;gap:1rem;margin-top:1.3rem}
+.bus-btns button{
+  background:var(--gold);color:var(--text-on-gold);
+  border:none;border-radius:var(--radius);
+  padding:.6rem 2rem;font-weight:900;font-size:.88rem;
+  cursor:pointer;font-family:'Nunito',sans-serif;
+  letter-spacing:.5px;text-transform:uppercase;
+  transition:.15s;
+}
+.bus-btns button:hover{background:var(--gold-dark)}
+.bus-btns button.ghost{background:#fff;color:var(--text-secondary);border:1.5px solid var(--border)}
+.bus-btns button.ghost:hover{background:var(--surface-hover)}
+.bus-result-card{
+  background:var(--card-bg);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  padding:1rem 1.2rem;
+  margin-bottom:.7rem;
+  box-shadow:0 1px 4px rgba(0,0,0,.05);
+  transition:.15s;
+}
+.bus-result-card:hover{border-color:var(--border-strong)}
+.bus-result-card.no-disp{border-left:3px solid var(--danger);background:#FFF8F8}
+
+/* ── LOGO SVG ────────────────────────────────────────────────────────────── */
+/* Inline SVG approximation of Colegio Aldea logo */
+
+/* ── PIN KEYPAD ──────────────────────────────────────────────────────────── */
+.pin-key{
+  background:var(--card-alt);
+  border:1.5px solid var(--border);
+  border-radius:var(--radius);
+  font-size:1.1rem;font-weight:700;
+  font-family:'Nunito',sans-serif;
+  padding:.65rem;cursor:pointer;
+  transition:.12s;color:var(--text-primary);
+}
+.pin-key:hover{background:var(--surface-hover);border-color:var(--border-strong)}
+.pin-key:active{background:var(--gold-light);border-color:var(--gold)}
+.pin-del{background:#FFF0F0;border-color:#F0C8C8;color:var(--danger)}
+.pin-del:hover{background:#FFE0E0}
+.pin-ok{background:var(--gold);border-color:var(--gold-dark);color:var(--text-on-gold)}
+.pin-ok:hover{background:var(--gold-dark)}
+.pd{
+  width:14px;height:14px;border-radius:50%;
+  border:2px solid var(--border-strong);
+  background:transparent;
+  transition:.15s;
+  display:inline-block;
+}
+.pd.filled{background:var(--gold);border-color:var(--gold)}
+.pd.error{background:var(--danger);border-color:var(--danger)}
+
+@media(max-width:600px){
+  .fg{grid-template-columns:1fr}
+  .bus-table .lbl{font-size:.73rem;padding:.4rem .55rem}
+}
+
+/* ── PRINT STYLES ────────────────────────────────────────────────────────── */
+@media print{
+  body > *:not(#recibo-print){display:none!important}
+  #recibo-print{display:block!important}
+  #recibo-print{
+    font-family:'Nunito Sans',Arial,sans-serif;
+    color:#000;background:#fff;
+    padding:0;margin:0;
+  }
+  .recibo-page{
+    width:100%;max-width:800px;margin:0 auto;
+    padding:2rem 2.5rem;
+  }
+  .recibo-header{text-align:center;border-bottom:3px solid #000;padding-bottom:1rem;margin-bottom:1.5rem}
+  .recibo-header h1{font-size:1.3rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;margin-bottom:.2rem}
+  .recibo-header h2{font-size:1rem;font-weight:600;letter-spacing:.5px}
+  .recibo-meta{display:grid;grid-template-columns:1fr 1fr;gap:.5rem 2rem;margin-bottom:1.5rem;font-size:.9rem}
+  .recibo-meta .campo{display:flex;flex-direction:column}
+  .recibo-meta .lbl{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#555;margin-bottom:.15rem}
+  .recibo-meta .val{font-weight:700;font-size:.95rem;border-bottom:1.5px solid #000;padding-bottom:.15rem;min-width:200px}
+  .recibo-table{width:100%;border-collapse:collapse;margin-bottom:1.5rem;font-size:.82rem}
+  .recibo-table th{background:#000;color:#fff;padding:.45rem .6rem;text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.5px}
+  .recibo-table td{padding:.4rem .6rem;border-bottom:1px solid #ccc;vertical-align:top}
+  .recibo-table tr:nth-child(even) td{background:#f5f5f5}
+  .recibo-table .num{width:60px;font-weight:700}
+  .recibo-table .check{width:50px;text-align:center;font-size:1rem}
+  .recibo-firmas{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:2.5rem}
+  .recibo-firma{border-top:2px solid #000;padding-top:.4rem;font-size:.78rem;text-align:center;color:#333}
+  .recibo-obs{background:#f5f5f5;border:1px solid #ccc;border-radius:4px;padding:.7rem;font-size:.82rem;margin-bottom:1.5rem}
+  .recibo-footer{text-align:center;font-size:.7rem;color:#888;margin-top:2rem;border-top:1px solid #ccc;padding-top:.7rem}
+  @page{margin:1.5cm}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ══════════════════════════════════════════════════════════════ -->
+<header>
+  <div class="logo-area">
+    <!-- Colegio Aldea Logo (SVG recreation) -->
+    <svg class="logo-svg" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="52" height="52" rx="10" fill="#FAF7F0"/>
+      <!-- "Colegio" text approximation -->
+      <text x="5" y="20" font-family="Georgia,serif" font-size="8.5" font-style="italic" fill="#F5A623" font-weight="bold">Colegio</text>
+      <!-- "ALDEA" brush-style text -->
+      <text x="4" y="38" font-family="Georgia,serif" font-size="14" font-weight="900" fill="#E8234A" letter-spacing="1">ALDEA</text>
+      <!-- decorative underline accent -->
+      <path d="M4 41 Q26 44 48 41" stroke="#F5A623" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </svg>
+    <div class="logo-text-block">
+      <span class="logo-colegio">COLEGIO</span>
+      <span class="logo-aldea">ALDEA</span>
+      <span class="logo-biblioteca">📚 Biblioteca</span>
+    </div>
+  </div>
+  <div class="header-meta">
+    <div class="header-date" id="hfecha"></div>
+    <div class="header-stats" id="htotal"></div>
+    <div id="cover-progress" style="display:none;font-size:.7rem;color:var(--gold);margin-top:.2rem"></div>
+  </div>
+</header>
+
+<!-- ══ NAV ════════════════════════════════════════════════════════════════ -->
+<nav>
+  <button class="active" onclick="sv('bus',this)">🔍 Buscador</button>
+  <span id="admin-tabs" style="display:none;contents:contents">
+    <button onclick="sv('add',this)">＋ Registrar libro</button>
+    <button onclick="sv('cat',this)">📋 Catálogo</button>
+    <button onclick="sv('pre',this)">📤 Préstamos</button>
+    <button onclick="sv('his',this)">🕓 Historial</button>
+    <button onclick="sv('imp',this)">📥 Importar Excel</button>
+  </span>
+  <button id="lock-btn" onclick="toggleLock()" style="margin-left:auto;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);font-size:.75rem;padding:.4rem .8rem;border-radius:var(--radius);border:1px solid rgba(255,255,255,.2)">🔒 Admin</button>
+</nav>
+
+<main>
+
+<!-- ══ CATÁLOGO ══════════════════════════════════════════════════════════ -->
+<div class="vista" id="vista-cat">
+  <div class="stats" id="sc"></div>
+  <div class="barra">
+    <input id="q" placeholder="Buscar por título, autor, categoría, editorial, colección, ISBN, sala…" oninput="buscar()">
+    <select id="ff" onchange="buscar()"><option value="">Todos los formatos</option></select>
+    <select id="fa" onchange="buscar()"><option value="">Todas las categorías</option></select>
+    <select id="fs" onchange="buscar()"><option value="">Todas las salas</option></select>
+    <select id="fe" onchange="buscar()"><option value="">Todos los estados</option><option value="disp">Disponible</option><option value="prest">Prestado</option></select>
+  </div>
+  <div id="pt" class="pag"></div>
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr>
+      <th>NUM</th><th>Portada</th><th>Grado</th><th>Nombre</th><th>Autor</th><th>Categoría</th><th>Vol</th>
+      <th>Formato</th><th>Descripción</th><th>Editorial</th><th>Colección/Serie</th>
+      <th>ISBN</th><th>Observación</th><th>Ubicación</th><th>Sala</th>
+      <th>Estado</th><th>Acciones</th>
+    </tr></thead>
+    <tbody id="tb"></tbody>
+  </table>
+  </div>
+  <div id="pb" class="pag"></div>
+  <p id="nr" class="empty" style="display:none">Sin resultados.</p>
+</div>
+
+<!-- ══ PRÉSTAMOS ════════════════════════════════════════════════════════ -->
+<div class="vista" id="vista-pre">
+  <div class="stats" id="sc-pre"></div>
+  <div class="barra">
+    <input id="qp" placeholder="Buscar por lector, libro, categoría…" oninput="fp()">
+    <button class="btn btn-amber" onclick="oAnual()">📋 Préstamo Anual</button>
+  </div>
+  <div id="lp"></div>
+</div>
+
+<!-- ══ HISTORIAL ════════════════════════════════════════════════════════ -->
+<div class="vista" id="vista-his">
+  <div class="barra"><input id="qh" placeholder="Buscar en historial…" oninput="fh()"></div>
+  <div id="lh"></div>
+</div>
+
+<!-- ══ AGREGAR ══════════════════════════════════════════════════════════ -->
+<div class="vista" id="vista-add">
+  <div style="max-width:640px">
+    <div class="panel">
+      <h2>Registrar nuevo libro</h2>
+      <div id="al-ag"></div>
+      <div class="fg">
+        <div class="fi full"><label>Nombre / Título *</label><input id="an"></div>
+        <div class="fi"><label>NUM</label><input id="anum" placeholder="Número de catálogo"></div>
+        <div class="fi"><label>Grado</label><input id="agr" placeholder="Ej: 1G, 4G"></div>
+        <div class="fi"><label>Autor</label><input id="aau"></div>
+        <div class="fi"><label>Categoría</label><input id="aare"></div>
+        <div class="fi"><label>Vol</label><input id="avol"></div>
+        <div class="fi"><label>Formato</label><input id="afmt" placeholder="Libro, CD, DVD…"></div>
+        <div class="fi"><label>Editorial</label><input id="aed"></div>
+        <div class="fi"><label>Colección/Serie</label><input id="acol"></div>
+        <div class="fi"><label>ISBN</label><input id="aisbn"></div>
+        <div class="fi"><label>Ubicación</label><input id="aubic"></div>
+        <div class="fi"><label>Sala</label><input id="asala"></div>
+        <div class="fi"><label>Cantidad</label><input id="acant" type="number" min="1" value="1"></div>
+        <div class="fi full"><label>Descripción</label><textarea id="adesc"></textarea></div>
+        <div class="fi full"><label>Observación</label><textarea id="aobs"></textarea></div>
+      </div>
+      <div style="margin-top:1rem;display:flex;gap:.5rem">
+        <button class="btn btn-primary" onclick="addLibro()">Guardar libro</button>
+        <button class="btn btn-ghost" onclick="clrAdd()">Limpiar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BUSCADOR (vista usuario) ════════════════════════════════════════ -->
+<div class="vista activa" id="vista-bus">
+  <div style="max-width:560px;margin:0 auto">
+    <div class="buscador-box">
+      <h2>🔍 Buscador de <span>Libros</span></h2>
+      <div style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:.2rem">
+        <table class="bus-table">
+          <tbody id="bus-form"></tbody>
+        </table>
+      </div>
+      <div class="bus-btns">
+        <button class="ghost" onclick="busLimpiar()">Limpiar</button>
+        <button onclick="buscarLibro()">Buscar libro</button>
+      </div>
+    </div>
+    <div id="bus-res" style="margin-top:1.2rem"></div>
+  </div>
+</div>
+
+<!-- ══ IMPORTAR EXCEL ════════════════════════════════════════════════════ -->
+<div class="vista" id="vista-imp">
+  <div style="max-width:700px">
+    <div class="panel">
+      <h2>📥 Importar desde Excel</h2>
+      <p style="font-size:.83rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.7">
+        Arrastrá tu archivo <strong style="color:var(--gold)">.xlsx / .xls</strong> o hacé clic para seleccionarlo.<br>
+        Columnas detectadas automáticamente: <strong style="color:var(--text-secondary)">NUM, GRADO, Nombre, Categoría, Autor, Vol, Formato, Descripcion, Editorial, Coleccion/Serie, ISBN, OBSERVACIÓN, UBICACION, SALA</strong>.
+      </p>
+
+      <!-- ADD mode -->
+      <div class="drop-zone" id="dz" onclick="document.getElementById('fi-add').click()"
+        ondragover="event.preventDefault();this.classList.add('over')"
+        ondragleave="this.classList.remove('over')"
+        ondrop="onDrop(event)">
+        <div class="icon">📂</div>
+        <p><strong>Hacer clic o arrastrar archivo aquí</strong></p>
+        <p style="margin-top:.3rem;font-size:.78rem">Agrega los libros del Excel a los ya existentes</p>
+      </div>
+      <input type="file" id="fi-add" accept=".xlsx,.xls" style="display:none" onchange="prepImport(this.files[0],'add')">
+
+      <!-- REPLACE mode -->
+      <div style="margin-top:.9rem;display:flex;gap:.7rem;flex-wrap:wrap">
+        <button class="btn btn-amber" onclick="document.getElementById('fi-rep').click()">
+          🔄 Reemplazar toda la base de datos
+        </button>
+        <input type="file" id="fi-rep" accept=".xlsx,.xls" style="display:none" onchange="prepImport(this.files[0],'replace')">
+      </div>
+      <p style="font-size:.76rem;color:var(--text-muted);margin-top:.4rem">⚠ "Reemplazar" borra todos los datos actuales y carga el Excel desde cero.</p>
+
+      <!-- Status log — always visible -->
+      <div id="imp-log" style="margin-top:1rem;padding:.85rem 1rem;border-radius:var(--radius);background:var(--card-alt);border:1px solid var(--border);font-size:.84rem;color:var(--text-muted);min-height:48px">
+        Esperando archivo…
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>💡 Consejos para la importación</h2>
+      <ul style="font-size:.82rem;color:var(--text-muted);line-height:2.1;padding-left:1.2rem">
+        <li>La primera fila debe tener los encabezados de columnas</li>
+        <li>Las columnas se detectan por nombre (no hace falta orden exacto)</li>
+        <li>Tu archivo <strong style="color:var(--gold)">datos.xlsx</strong> es compatible directamente</li>
+        <li>Se ignoran filas completamente vacías</li>
+        <li>Los datos se guardan en el navegador automáticamente</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- ══ MODAL EDITAR FECHA PRÉSTAMO ══════════════════════════════════════ -->
+<div class="modal-overlay" id="mp-ep">
+  <div class="modal" style="max-width:400px">
+    <h2>✏ Editar fecha de devolución</h2>
+    <input type="hidden" id="ep-uid">
+    <p id="ep-title" style="font-size:.87rem;font-weight:700;color:var(--text-secondary);margin-bottom:1rem"></p>
+    <div class="fi">
+      <label>Nueva fecha de devolución</label>
+      <input id="ep-f" type="date">
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="cm('mp-ep')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEditPrest()">Guardar fecha</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL CONFIRMAR DEVOLUCIÓN ══════════════════════════════════════ -->
+<div class="modal-overlay" id="mp-dv">
+  <div class="modal" style="max-width:400px">
+    <h2>✓ Confirmar devolución</h2>
+    <input type="hidden" id="dv-uid">
+    <p id="dv-title" style="font-size:.87rem;font-weight:700;color:var(--text-secondary);margin-bottom:1rem"></p>
+    <div class="fi">
+      <label>¿Cuándo fue devuelto?</label>
+      <input id="dv-f" type="date">
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="cm('mp-dv')">Cancelar</button>
+      <button class="btn btn-success" onclick="confDevolver()">Confirmar devolución</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL PRÉSTAMO ANUAL ═════════════════════════════════════════════ -->
+<div class="modal-overlay" id="mp-anual" style="align-items:flex-start">
+  <div class="modal" style="max-width:720px;width:100%">
+    <h2>📋 Préstamo Anual</h2>
+
+    <!-- Teacher info -->
+    <div class="fg" style="margin-bottom:1rem">
+      <div class="fi full"><label>Nombre del docente *</label><input id="an-docente" placeholder="Nombre completo del docente"></div>
+      <div class="fi"><label>Fecha de entrega</label><input id="an-fecha" type="date"></div>
+      <div class="fi"><label>Fecha de devolución *</label><input id="an-devol" type="date"></div>
+      <div class="fi"><label>Aprobado por (Admin) *</label><input id="an-admin" placeholder="Tu nombre"></div>
+      <div class="fi full"><label>Observaciones</label><input id="an-obs" placeholder="Ej: Para uso en aula durante el año escolar 2026"></div>
+    </div>
+
+    <!-- Book search -->
+    <div style="border-top:1px solid var(--border);padding-top:.9rem;margin-bottom:.7rem">
+      <div style="font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:.5rem;font-family:'Nunito',sans-serif">Buscar y agregar libros</div>
+      <div style="display:flex;gap:.5rem;margin-bottom:.6rem">
+        <input id="an-q" placeholder="Buscar por título, NUM, autor, categoría…" style="flex:1;padding:.48rem .8rem;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.84rem;background:#fff;font-family:'Nunito Sans',sans-serif" oninput="anBuscar()">
+      </div>
+      <div id="an-resultados" style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--card-alt);font-size:.82rem"></div>
+    </div>
+
+    <!-- Selected books -->
+    <div style="border-top:1px solid var(--border);padding-top:.9rem;margin-bottom:.9rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+        <div style="font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);font-family:'Nunito',sans-serif">Libros seleccionados <span id="an-count" style="color:var(--gold)">0</span></div>
+        <button class="btn btn-ghost" style="font-size:.74rem;padding:.22rem .6rem" onclick="anLimpiarSel()">Limpiar selección</button>
+      </div>
+      <div id="an-seleccionados" style="max-height:180px;overflow-y:auto;font-size:.82rem">
+        <div style="color:var(--text-muted);padding:.6rem;text-align:center">Ningún libro seleccionado todavía</div>
+      </div>
+    </div>
+
+    <div id="al-anual"></div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="cm('mp-anual')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confAnual()">✅ Confirmar y generar comprobante</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL PORTADA ════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="mp-cov">
+  <div class="modal" style="max-width:560px">
+    <h2>🖼 Seleccionar portada</h2>
+    <p id="cov-title" style="font-size:.85rem;font-weight:700;color:var(--text-secondary);margin-bottom:1rem"></p>
+    <div id="cov-options" style="display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center;margin-bottom:1rem"></div>
+    <div class="fi" style="margin-bottom:.8rem">
+      <label>O pegar URL de imagen personalizada</label>
+      <div style="display:flex;gap:.5rem">
+        <input id="cov-url" placeholder="https://..." style="flex:1">
+        <button class="btn btn-ghost" onclick="previewCustomCover()">Vista previa</button>
+      </div>
+      <img id="cov-preview" style="display:none;width:80px;margin-top:.5rem;border-radius:var(--radius);border:1px solid var(--border)">
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="cm('mp-cov')">Cancelar</button>
+      <button class="btn btn-danger" onclick="removeCover()">🗑 Sin portada</button>
+      <button class="btn btn-primary" onclick="saveCover()">Guardar portada</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ COMPROBANTE DE IMPRESIÓN (solo visible al imprimir) ══════════════ -->
+<div id="recibo-print" style="display:none">
+  <div id="recibo-content"></div>
+</div>
+<div class="modal-overlay" id="mp-rep">
+  <div class="modal" style="max-width:420px;text-align:center">
+    <div style="font-size:2rem;margin-bottom:.5rem">⚠️</div>
+    <h2 style="text-align:center">¿Reemplazar base de datos?</h2>
+    <p id="rep-txt" style="font-size:.85rem;color:var(--text-muted);margin:.8rem 0 1.2rem;line-height:1.6"></p>
+    <div style="background:var(--danger-bg);border:1px solid #F0AABB;border-radius:var(--radius);padding:.7rem;margin-bottom:1.2rem;font-size:.82rem;color:var(--danger);font-weight:700">
+      Se borrarán TODOS los libros, préstamos e historial actuales.<br>Esta acción no se puede deshacer.
+    </div>
+    <div class="mf" style="justify-content:center">
+      <button class="btn btn-ghost" onclick="cm('mp-rep');setLog('Importación cancelada.')">Cancelar</button>
+      <button class="btn btn-danger" onclick="cm('mp-rep');importFile(window._repFile,'replace')">Sí, reemplazar todo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL PIN ════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="mp-pin">
+  <div class="modal" style="max-width:320px;text-align:center">
+    <div style="font-size:2rem;margin-bottom:.5rem" id="pin-icon">🔒</div>
+    <h2 style="text-align:center;margin-bottom:.3rem" id="pin-title">Acceso Admin</h2>
+    <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:1.2rem" id="pin-subtitle">Ingresá el PIN para continuar</p>
+    <div id="pin-dots" style="display:flex;justify-content:center;gap:.5rem;margin-bottom:1.2rem">
+      <span class="pd"></span><span class="pd"></span><span class="pd"></span><span class="pd"></span>
+    </div>
+    <div id="pin-err" style="font-size:.8rem;color:var(--danger);min-height:1.2rem;margin-bottom:.5rem"></div>
+    <!-- PIN Keypad -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;max-width:220px;margin:0 auto 1rem">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key pin-del" onclick="pinDel()">⌫</button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key pin-ok" onclick="pinSubmit()">OK</button>
+    </div>
+    <button class="btn btn-ghost" style="width:100%" onclick="cm('mp-pin')">Cancelar</button>
+  </div>
+</div>
+
+<!-- ══ MODAL PRÉSTAMO ══════════════════════════════════════════════════ -->
+<!-- ══ MODAL SOLICITAR PRÉSTAMO (student) ══════════════════════════════ -->
+<div class="modal-overlay" id="mp">
+  <div class="modal">
+    <h2>📋 Solicitar préstamo</h2>
+    <div id="al-mp"></div>
+    <input type="hidden" id="mp-id">
+    <p id="mp-t" style="font-size:.88rem;font-weight:700;color:var(--gold);margin-bottom:.9rem"></p>
+    <div class="fg">
+      <div class="fi full"><label>Tu nombre completo *</label><input id="mp-l" placeholder="¿Quién solicita el libro?"></div>
+      <div class="fi full"><label>Contacto (opcional)</label><input id="mp-c" placeholder="Teléfono o email"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="cm('mp')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confSolicitud()">Confirmar solicitud</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL APROBAR PRÉSTAMO (admin) ══════════════════════════════════ -->
+<div class="modal-overlay" id="mp-apr">
+  <div class="modal">
+    <h2>✅ Aprobar préstamo</h2>
+    <div id="al-apr"></div>
+    <input type="hidden" id="apr-uid">
+    <p id="apr-t" style="font-size:.88rem;font-weight:700;color:var(--gold);margin-bottom:.2rem"></p>
+    <p id="apr-sol" style="font-size:.82rem;color:var(--text-muted);margin-bottom:.9rem"></p>
+    <div class="fg">
+      <div class="fi full"><label>Nombre del lector *</label><input id="apr-l" placeholder="Confirmar nombre del lector"></div>
+      <div class="fi"><label>Contacto</label><input id="apr-c"></div>
+      <div class="fi"><label>Fecha devolución *</label><input id="apr-f" type="date"></div>
+      <div class="fi full"><label>Aprobado por (Admin) *</label><input id="apr-admin" placeholder="Tu nombre como bibliotecario"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="cm('mp-apr')">Cancelar</button>
+      <button class="btn btn-danger" style="margin-right:auto" onclick="rechSolicitud()">✕ Rechazar</button>
+      <button class="btn btn-primary" onclick="confPrest()">Confirmar préstamo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL ELIMINAR ════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="mdel">
+  <div class="modal" style="max-width:380px">
+    <h2>⚠ ¿Eliminar libro?</h2>
+    <p id="mdel-txt" style="font-size:.87rem;color:var(--text-muted);margin-bottom:1.2rem;line-height:1.6"></p>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="cm('mdel')">Cancelar</button>
+      <button class="btn btn-danger" onclick="delConfirm()">Sí, eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL EDITAR ══════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="me">
+  <div class="modal">
+    <h2>✏ Editar libro</h2>
+    <input type="hidden" id="eid">
+    <div class="fg">
+      <div class="fi full"><label>Nombre *</label><input id="en"></div>
+      <div class="fi"><label>NUM</label><input id="enum2"></div>
+      <div class="fi"><label>Grado</label><input id="egr"></div>
+      <div class="fi"><label>Autor</label><input id="eau"></div>
+      <div class="fi"><label>Categoría</label><input id="eare"></div>
+      <div class="fi"><label>Vol</label><input id="evol"></div>
+      <div class="fi"><label>Formato</label><input id="efmt"></div>
+      <div class="fi"><label>Editorial</label><input id="eed"></div>
+      <div class="fi"><label>Colección/Serie</label><input id="ecol"></div>
+      <div class="fi"><label>ISBN</label><input id="eisbn"></div>
+      <div class="fi"><label>Ubicación</label><input id="eubic"></div>
+      <div class="fi"><label>Sala</label><input id="esala"></div>
+      <div class="fi"><label>Cantidad</label><input id="ecant" type="number" min="1"></div>
+      <div class="fi full"><label>Descripción</label><textarea id="edesc"></textarea></div>
+      <div class="fi full"><label>Observación</label><textarea id="eobs"></textarea></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="cm('me')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEdit()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ JAVASCRIPT ══════════════════════════════════════════════════════ -->
+<script>
+// ── SUPABASE CONFIG ───────────────────────────────────────────────────────
+const SUPA_URL = 'https://mlbpjbheugfqbffxutaf.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1sYnBqYmhldWdmcWJmZnh1dGFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNTgwMzksImV4cCI6MjA5NTkzNDAzOX0.vFoIEfOctQV8VkWH7aJU9YbDaU7GrgFSG9c0IpL7H1c';
+const HEADERS = {'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Prefer':'return=representation'};
+
+async function sbGet(table, params=''){
+  const r=await fetch(`${SUPA_URL}/rest/v1/${table}?${params}`,{headers:{...HEADERS,'Prefer':''}});
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbInsert(table, data){
+  const r=await fetch(`${SUPA_URL}/rest/v1/${table}`,{method:'POST',headers:HEADERS,body:JSON.stringify(data)});
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbUpdate(table, id, data){
+  const r=await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${id}`,{method:'PATCH',headers:HEADERS,body:JSON.stringify(data)});
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbDelete(table, id){
+  const r=await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${id}`,{method:'DELETE',headers:{...HEADERS,'Prefer':''}});
+  if(!r.ok) throw new Error(await r.text());
+}
+async function sbUpsert(table, data, onConflict='uid'){
+  const r=await fetch(`${SUPA_URL}/rest/v1/${table}?on_conflict=${onConflict}`,{method:'POST',headers:{...HEADERS,'Prefer':'resolution=merge-duplicates'},body:JSON.stringify(data)});
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+// ── MAP DB ↔ APP ──────────────────────────────────────────────────────────
+function dbToLibro(r){
+  return {id:r.id,num:r.num||'',grado:r.grado||'',nombre:r.nombre||'',
+    autor:r.autor||'-',area:r.area||'',vol:r.vol||'',formato:r.formato||'Libro',
+    desc:r.descripcion||'',editorial:r.editorial||'',coleccion:r.coleccion||'',
+    isbn:r.isbn||'',obs:r.obs||'',ubicacion:r.ubicacion||'',sala:r.sala||'',
+    cantidad:r.cantidad||1,disponibles:r.disponibles||1,cover:r.cover||''};
+}
+function libroToDb(l){
+  return {num:l.num||'',grado:l.grado||'',nombre:l.nombre||'',
+    autor:l.autor||'-',area:l.area||'',vol:l.vol||'',formato:l.formato||'Libro',
+    descripcion:l.desc||'',editorial:l.editorial||'',coleccion:l.coleccion||'',
+    isbn:l.isbn||'',obs:l.obs||'',ubicacion:l.ubicacion||'',sala:l.sala||'',
+    cantidad:l.cantidad||1,disponibles:l.disponibles||1,cover:l.cover||''};
+}
+function dbToPrestamo(r){
+  return {uid:r.uid,loanUid:r.loan_uid||'',libroId:r.libro_id,
+    libroNombre:r.libro_nombre||'',libroAutor:r.libro_autor||'',
+    libroArea:r.libro_area||'',libroNum:r.libro_num||'',libroVol:r.libro_vol||'',
+    lector:r.lector||'',contacto:r.contacto||'',
+    fechaSolicitud:r.fecha_solicitud||'',fechaPrestamo:r.fecha_prestamo||'',
+    fechaDevolucion:r.fecha_devolucion||'',fechaDevuelto:r.fecha_devuelto||'',
+    aprobadoPor:r.aprobado_por||'',obs:r.obs||'',
+    estado:r.estado||'pendiente',tipo:r.tipo||'regular',_dbId:r.id};
+}
+function prestamoToDb(p){
+  return {uid:p.uid,loan_uid:p.loanUid||'',libro_id:p.libroId||null,
+    libro_nombre:p.libroNombre||'',libro_autor:p.libroAutor||'',
+    libro_area:p.libroArea||'',libro_num:p.libroNum||'',libro_vol:p.libroVol||'',
+    lector:p.lector||'',contacto:p.contacto||'',
+    fecha_solicitud:p.fechaSolicitud||null,fecha_prestamo:p.fechaPrestamo||null,
+    fecha_devolucion:p.fechaDevolucion||null,fecha_devuelto:p.fechaDevuelto||null,
+    aprobado_por:p.aprobadoPor||'',obs:p.obs||'',
+    estado:p.estado||'pendiente',tipo:p.tipo||'regular'};
+}
+
+// ── APP STATE ─────────────────────────────────────────────────────────────
+let libros=[], prestamos=[], historial=[];
+const PG=50;
+let pg=1,fil=[],vistaAct='bus';
+let loading=false;
+
+function uid(){return Date.now()+'-'+Math.random().toString(36).slice(2,6)}
+function hoy(){return new Date().toISOString().split('T')[0]}
+function fmtF(f){if(!f)return '−';const[y,m,d]=f.split('-');return`${d}/${m}/${y}`}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function upHdr(){
+  const act=prestamos.filter(p=>p.estado==='activo').length;
+  const pend=prestamos.filter(p=>p.estado==='pendiente').length;
+  document.getElementById('htotal').textContent=`${libros.length} títulos · ${act} préstamos activos${pend?` · ${pend} solicitudes`:``}`;
+}
+
+function showLoader(msg='Cargando…'){
+  document.getElementById('htotal').textContent=msg;
+}
+
+document.getElementById('hfecha').textContent=new Date().toLocaleDateString('es-ES',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+// ── LOAD ALL DATA ─────────────────────────────────────────────────────────
+async function loadAll(){
+  showLoader('Conectando con Supabase…');
+  try{
+    const [lb,pr,hi]=await Promise.all([
+      sbGet('libros','select=*&order=id.asc&limit=5000'),
+      sbGet('prestamos','select=*&estado=neq.devuelto&order=id.asc'),
+      sbGet('historial','select=*&order=id.desc&limit=500'),
+    ]);
+    libros    = lb.map(dbToLibro);
+    prestamos = pr.map(dbToPrestamo);
+    historial = hi.map(dbToPrestamo);
+    upHdr();
+    rCat();
+    populateBusDropdowns();
+    setupRealtime();
+  }catch(e){
+    document.getElementById('htotal').textContent='⚠ Error de conexión — '+e.message;
+    console.error(e);
+  }
+}
+
+// ── REALTIME SUBSCRIPTIONS ────────────────────────────────────────────────
+function setupRealtime(){
+  // Poll every 8 seconds as a simple real-time fallback
+  // (Supabase WebSocket realtime requires the JS client lib;
+  //  polling works reliably for a school library context)
+  setInterval(async()=>{
+    try{
+      const [pr]=await Promise.all([
+        sbGet('prestamos','select=*&estado=neq.devuelto&order=id.asc'),
+      ]);
+      prestamos=pr.map(dbToPrestamo);
+      upHdr();
+      if(vistaAct==='pre') rPre();
+    }catch(e){}
+  },8000);
+
+  // Full refresh every 2 minutes
+  setInterval(async()=>{
+    try{
+      const [lb,pr,hi]=await Promise.all([
+        sbGet('libros','select=*&order=id.asc&limit=5000'),
+        sbGet('prestamos','select=*&estado=neq.devuelto&order=id.asc'),
+        sbGet('historial','select=*&order=id.desc&limit=500'),
+      ]);
+      libros    =lb.map(dbToLibro);
+      prestamos =pr.map(dbToPrestamo);
+      historial =hi.map(dbToPrestamo);
+      upHdr();
+      if(vistaAct==='cat'){buscar();}
+      if(vistaAct==='pre'){rPre();}
+      populateBusDropdowns();
+    }catch(e){}
+  },120000);
+}
+
+function sv(id,btn){
+  document.querySelectorAll('.vista').forEach(v=>v.classList.remove('activa'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('vista-'+id).classList.add('activa');
+  btn.classList.add('active');
+  vistaAct=id;
+  if(id==='cat')rCat();
+  if(id==='pre')rPre();
+  if(id==='his')rHis();
+}
+
+
+// ── CATÁLOGO ──────────────────────────────────────────────────────────────
+function popFiltros(){
+  const sf=document.getElementById('ff'),sa=document.getElementById('fa'),ss=document.getElementById('fs');
+  const fv=sf.value,av=sa.value,sv2=ss.value;
+  [...new Set(libros.map(l=>l.formato).filter(x=>x&&x!=='-'))].sort().forEach(f=>{
+    if(!sf.querySelector(`option[value="${f}"]`))sf.innerHTML+=`<option value="${f}">${esc(f)}</option>`;
+  });
+  [...new Set(libros.map(l=>l.area).filter(x=>x&&x!=='-'))].sort().forEach(a=>{
+    if(!sa.querySelector(`option[value="${a}"]`))sa.innerHTML+=`<option value="${a}">${esc(a)}</option>`;
+  });
+  [...new Set(libros.map(l=>l.sala).filter(x=>x&&x!=='-'))].sort().forEach(s=>{
+    if(!ss.querySelector(`option[value="${s}"]`))ss.innerHTML+=`<option value="${s}">${esc(s)}</option>`;
+  });
+  sf.value=fv;sa.value=av;ss.value=sv2;
+}
+
+function rCat(){
+  ['ff','fa','fs'].forEach(id=>{const s=document.getElementById(id);while(s.options.length>1)s.remove(1);});
+  popFiltros();buscar();rStats();upHdr();
+}
+
+function buscar(){
+  const q=document.getElementById('q').value.toLowerCase().trim();
+  const fm=document.getElementById('ff').value,ar=document.getElementById('fa').value,
+        sl=document.getElementById('fs').value,es=document.getElementById('fe').value;
+  fil=libros.filter(l=>{
+    const t=[l.num,l.grado,l.nombre,l.autor,l.area,l.vol,l.formato,l.desc,l.editorial,l.coleccion,l.isbn,l.obs,l.ubicacion,l.sala].join(' ').toLowerCase();
+    if(q&&!t.includes(q))return false;
+    if(fm&&l.formato!==fm)return false;
+    if(ar&&l.area!==ar)return false;
+    if(sl&&l.sala!==sl)return false;
+    if(es==='disp'&&l.disponibles===0)return false;
+    if(es==='prest'&&l.disponibles===l.cantidad)return false;
+    return true;
+  });
+  pg=1;rTabla();
+}
+
+function rTabla(){
+  const tb=document.getElementById('tb'),nr=document.getElementById('nr');
+  if(!fil.length){tb.innerHTML='';nr.style.display='block';document.getElementById('pt').innerHTML='';document.getElementById('pb').innerHTML='';return}
+  nr.style.display='none';
+  const tot=Math.ceil(fil.length/PG),sl=fil.slice((pg-1)*PG,pg*PG);
+  tb.innerHTML=sl.map(l=>{
+    const d=l.disponibles===0?'agot':l.disponibles<l.cantidad?'prest':'disp';
+    const dt=l.disponibles===0?'Agotado':l.disponibles<l.cantidad?`${l.disponibles}/${l.cantidad} disp.`:'Disponible';
+    const thumb=l.cover
+      ? `<img src="${esc(l.cover)}" style="width:32px;height:44px;object-fit:cover;border-radius:3px;border:1px solid var(--border);cursor:pointer" onclick="oCover(${l.id})" title="Ver/cambiar portada">`
+      : `<button onclick="oCover(${l.id})" style="font-size:.65rem;padding:.2rem .4rem;background:var(--card-alt);border:1px dashed var(--border);border-radius:4px;cursor:pointer;color:var(--text-muted);white-space:nowrap" title="Buscar portada">🖼</button>`;
+    return `<tr>
+      <td style="color:var(--text-muted);font-size:.74rem">${esc(l.num)}</td>
+      <td>${thumb}</td>
+      <td>${l.grado?`<span class="chip chip-g">${esc(l.grado)}</span>`:''}</td>
+      <td style="font-weight:700;white-space:normal;max-width:170px;color:var(--text-primary)">${esc(l.nombre)}</td>
+      <td style="white-space:normal;max-width:130px">${esc(l.autor||'−')}</td>
+      <td>${esc(l.area||'−')}</td>
+      <td>${esc(l.vol||'−')}</td>
+      <td><span class="chip">${esc(l.formato||'−')}</span></td>
+      <td style="font-size:.75rem" title="${esc(l.desc)}">${esc((l.desc||'').substring(0,45))}${(l.desc||'').length>45?'…':''}</td>
+      <td>${esc(l.editorial||'−')}</td>
+      <td style="font-size:.75rem">${esc(l.coleccion||'−')}</td>
+      <td style="font-size:.72rem">${esc(l.isbn||'−')}</td>
+      <td style="font-size:.72rem" title="${esc(l.obs)}">${esc((l.obs||'').substring(0,30))}${(l.obs||'').length>30?'…':''}</td>
+      <td style="font-size:.75rem">${esc(l.ubicacion||'−')}</td>
+      <td style="font-size:.75rem">${esc(l.sala||'−')}</td>
+      <td><span class="badge bd-${d}">${dt}</span></td>
+      <td><div style="display:flex;gap:.3rem;flex-wrap:wrap">
+        <button class="btn btn-primary" style="padding:.25rem .6rem;font-size:.72rem" onclick="opre(${l.id})" ${l.disponibles===0?'disabled':''}>Prestar</button>
+        <button class="btn btn-ghost" style="padding:.25rem .6rem;font-size:.72rem" onclick="oedit(${l.id})">Editar</button>
+        <button class="btn btn-danger" style="padding:.25rem .55rem;font-size:.72rem" onclick="del(${l.id})">✕</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+  rPag(tot);
+}
+
+function rPag(tot){
+  if(tot<=1){document.getElementById('pt').innerHTML='';document.getElementById('pb').innerHTML='';return}
+  const info=`<span style="color:var(--text-muted)">${fil.length} resultados · Pág ${pg}/${tot}</span>`;
+  const p=`<button onclick="chPg(${pg-1})" ${pg===1?'disabled':''}>‹</button>`;
+  const n=`<button onclick="chPg(${pg+1})" ${pg===tot?'disabled':''}>›</button>`;
+  const nums=Array.from({length:Math.min(tot,7)},(_,i)=>{
+    const x=tot<=7?i+1:pg<=4?i+1:pg>=tot-3?tot-6+i:pg-3+i;
+    return `<button class="${x===pg?'cur':''}" onclick="chPg(${x})">${x}</button>`;
+  }).join('');
+  const h=`<div style="display:flex;gap:.35rem;align-items:center;flex-wrap:wrap">${p}${nums}${n}${info}</div>`;
+  document.getElementById('pt').innerHTML=h;document.getElementById('pb').innerHTML=h;
+}
+
+function chPg(n){if(n<1||n>Math.ceil(fil.length/PG))return;pg=n;rTabla();document.getElementById('vista-cat').scrollIntoView({behavior:'smooth',block:'start'})}
+
+function rStats(){
+  const t=libros.length,ej=libros.reduce((a,l)=>a+l.cantidad,0),pa=prestamos.length,di=libros.reduce((a,l)=>a+l.disponibles,0);
+  document.getElementById('sc').innerHTML=`
+    <div class="sc verde"><div class="l">Títulos</div><div class="v">${t.toLocaleString()}</div></div>
+    <div class="sc azul"><div class="l">Ejemplares</div><div class="v">${ej.toLocaleString()}</div></div>
+    <div class="sc ambar"><div class="l">Préstamos activos</div><div class="v">${pa}</div></div>
+    <div class="sc verde"><div class="l">Disponibles</div><div class="v">${di.toLocaleString()}</div></div>`;
+}
+
+// ── SOLICITUD (student → pending) ────────────────────────────────────────
+function opre(id){
+  const l=libros.find(x=>x.id===id);if(!l||l.disponibles===0)return;
+  document.getElementById('mp-id').value=id;
+  document.getElementById('mp-t').textContent=`📖 ${l.nombre}${l.autor&&l.autor!=='-'?' — '+l.autor:''}`;
+  ['mp-l','mp-c'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('al-mp').innerHTML='';
+  document.getElementById('mp').classList.add('abierto');
+}
+
+async function confSolicitud(){
+  const id=parseInt(document.getElementById('mp-id').value);
+  const solicitante=document.getElementById('mp-l').value.trim();
+  if(!solicitante){alerta('al-mp','Ingresá tu nombre completo.','err');return}
+  const l=libros.find(x=>x.id===id);if(!l||l.disponibles===0){alerta('al-mp','Sin ejemplares disponibles.','err');return}
+  const p={uid:uid(),libroId:id,libroNombre:l.nombre,libroAutor:l.autor,
+    libroArea:l.area,libroNum:l.num||'',libroVol:l.vol||'',
+    lector:solicitante,contacto:document.getElementById('mp-c').value.trim(),
+    fechaSolicitud:hoy(),fechaPrestamo:null,fechaDevolucion:null,estado:'pendiente',tipo:'regular'};
+  try{
+    const res=await sbInsert('prestamos',prestamoToDb(p));
+    p._dbId=res[0].id;
+    prestamos.push(p);
+    cm('mp');upHdr();
+    document.getElementById('bus-res').innerHTML=`
+      <div class="bus-result-card" style="border-color:var(--success);background:var(--success-bg);text-align:center;padding:1.5rem">
+        <div style="font-size:1.5rem;margin-bottom:.4rem">✅</div>
+        <div style="font-weight:800;color:var(--success);font-size:.95rem">¡Solicitud enviada!</div>
+        <div style="font-size:.82rem;color:var(--text-muted);margin-top:.3rem">Un bibliotecario confirmará tu préstamo pronto.</div>
+      </div>`;
+  }catch(e){alerta('al-mp','Error: '+e.message,'err');}
+}
+
+// ── APROBAR SOLICITUD (admin) ─────────────────────────────────────────────
+function oAprobar(uid2){
+  const p=prestamos.find(x=>x.uid===uid2);if(!p)return;
+  document.getElementById('apr-uid').value=uid2;
+  document.getElementById('apr-t').textContent=`📖 ${p.libroNombre}`;
+  document.getElementById('apr-sol').textContent=`Solicitado por: ${p.lector}${p.contacto?' · '+p.contacto:''} · ${fmtF(p.fechaSolicitud)}`;
+  document.getElementById('apr-l').value=p.lector;
+  document.getElementById('apr-c').value=p.contacto||'';
+  document.getElementById('apr-f').value='';
+  document.getElementById('apr-admin').value='';
+  document.getElementById('al-apr').innerHTML='';
+  document.getElementById('mp-apr').classList.add('abierto');
+}
+
+async function confPrest(){
+  const uid2=document.getElementById('apr-uid').value;
+  const lector=document.getElementById('apr-l').value.trim();
+  const fecha=document.getElementById('apr-f').value;
+  const adminNombre=document.getElementById('apr-admin').value.trim();
+  if(!lector){alerta('al-apr','El nombre del lector es obligatorio.','err');return}
+  if(!fecha){alerta('al-apr','La fecha de devolución es obligatoria.','err');return}
+  if(!adminNombre){alerta('al-apr','Ingresá tu nombre como administrador.','err');return}
+  const p=prestamos.find(x=>x.uid===uid2);if(!p)return;
+  const l=libros.find(x=>x.id===p.libroId);
+  if(!l||l.disponibles===0){alerta('al-apr','Sin ejemplares disponibles.','err');return}
+  l.disponibles--;
+  p.lector=lector;
+  p.contacto=document.getElementById('apr-c').value.trim();
+  p.fechaPrestamo=hoy();
+  p.fechaDevolucion=fecha;
+  p.aprobadoPor=adminNombre;
+  p.estado='activo';
+  try{
+    await Promise.all([
+      sbUpdate('libros',l.id,{disponibles:l.disponibles}),
+      sbUpdate('prestamos',p._dbId,{lector,contacto:p.contacto,fecha_prestamo:p.fechaPrestamo,fecha_devolucion:fecha,aprobado_por:adminNombre,estado:'activo'})
+    ]);
+    cm('mp-apr');rPre();rCat();upHdr();
+  }catch(e){alerta('al-apr','Error: '+e.message,'err');}
+}
+
+async function rechSolicitud(){
+  const uid2=document.getElementById('apr-uid').value;
+  const p=prestamos.find(x=>x.uid===uid2);if(!p)return;
+  if(!confirm('¿Rechazar esta solicitud? Se eliminará.'))return;
+  try{
+    await sbDelete('prestamos',p._dbId);
+    prestamos=prestamos.filter(x=>x.uid!==uid2);
+    cm('mp-apr');rPre();upHdr();
+  }catch(e){alert('Error: '+e.message);}
+}
+
+// ── PRÉSTAMOS VIEW ────────────────────────────────────────────────────────
+function rPre(){
+  const activos=prestamos.filter(p=>p.estado==='activo');
+  const pendientes=prestamos.filter(p=>p.estado==='pendiente');
+  const mora=activos.filter(p=>p.fechaDevolucion&&p.fechaDevolucion<hoy()).length;
+  document.getElementById('sc-pre').innerHTML=`
+    <div class="sc ambar"><div class="l">Préstamos activos</div><div class="v">${activos.length}</div></div>
+    <div class="sc rojo"><div class="l">Atrasados</div><div class="v">${mora}</div></div>
+    <div class="sc verde"><div class="l">Al Día</div><div class="v">${activos.length-mora}</div></div>
+    <div class="sc azul"><div class="l">Solicitudes pendientes</div><div class="v">${pendientes.length}</div></div>`;
+  fp();
+}
+
+function fp(){
+  const q=document.getElementById('qp').value.toLowerCase().trim();
+  const activos=prestamos.filter(p=>p.estado==='activo'&&[p.lector,p.libroNombre,p.libroAutor,p.libroArea,p.contacto].join(' ').toLowerCase().includes(q));
+  const pendientes=prestamos.filter(p=>p.estado==='pendiente'&&[p.lector,p.libroNombre,p.libroAutor].join(' ').toLowerCase().includes(q));
+  const el=document.getElementById('lp'),hs=hoy();
+  let html='';
+
+  // Pending solicitudes
+  if(pendientes.length){
+    html+=`<div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--info);margin:.4rem 0 .4rem;font-family:'Nunito',sans-serif">
+      📋 Solicitudes pendientes (${pendientes.length})</div>`;
+    html+=pendientes.map(p=>{
+      const libro=libros.find(x=>x.id===p.libroId);
+      return `
+      <div class="pc" style="border-left:3px solid var(--info);background:#F0F7FF">
+        <div style="flex:1;min-width:180px">
+          <div style="font-weight:700;font-size:.9rem;color:var(--text-primary)">📖 ${esc(p.libroNombre)}</div>
+          ${p.libroArea&&p.libroArea!=='-'?`<div style="font-size:.75rem;color:var(--text-muted)">${esc(p.libroArea)}</div>`:''}
+          <div style="font-size:.82rem;margin-top:.3rem;color:var(--text-secondary)"><strong style="color:var(--text-primary)">Solicitante:</strong> ${esc(p.lector)}${p.contacto?' · '+esc(p.contacto):''}</div>
+          <div style="font-size:.75rem;color:var(--text-muted);margin-top:.15rem">Solicitado: ${fmtF(p.fechaSolicitud)}</div>
+          ${libro&&(libro.ubicacion||libro.sala)?`<div style="font-size:.75rem;margin-top:.3rem;color:var(--info);font-weight:600">📍 ${[libro.sala,libro.ubicacion].filter(x=>x&&x!=='-').join(' · ')}</div>`:''}
+        </div>
+        <button class="btn btn-info" onclick="oAprobar('${p.uid}')">✅ Aprobar</button>
+      </div>`}).join('');
+  }
+
+  // Active loans
+  if(activos.length){
+    if(pendientes.length) html+=`<div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);margin:.8rem 0 .4rem;font-family:'Nunito',sans-serif">Préstamos activos (${activos.length})</div>`;
+    html+=activos.map(p=>{
+      const mora=p.fechaDevolucion&&p.fechaDevolucion<hs;
+      const anualBadge=p.tipo==='anual'?`<span style="font-size:.68rem;background:#FEF5CC;color:#8A6A00;border:1px solid #E8D080;border-radius:10px;padding:.1rem .45rem;font-weight:800;margin-left:.4rem">📋 Anual</span>`:'';
+      return `<div class="pc${mora?' mora':''}">
+        <div style="flex:1;min-width:180px">
+          <div style="font-weight:700;font-size:.9rem;color:var(--text-primary)">📖 ${esc(p.libroNombre)}${anualBadge}</div>
+          ${p.libroArea&&p.libroArea!=='-'?`<div style="font-size:.75rem;color:var(--text-muted)">${esc(p.libroArea)}</div>`:''}
+          <div style="font-size:.82rem;margin-top:.3rem;color:var(--text-secondary)"><strong style="color:var(--text-primary)">Lector:</strong> ${esc(p.lector)}${p.contacto?' · '+esc(p.contacto):''}</div>
+          <div style="font-size:.75rem;color:var(--text-muted);margin-top:.15rem">Prestado: ${fmtF(p.fechaPrestamo)} · Devolución: ${p.fechaDevolucion?fmtF(p.fechaDevolucion):'No definida'}${p.aprobadoPor?` · Aprobado por: <strong>${esc(p.aprobadoPor)}</strong>`:''}</div>
+          ${mora?`<span style="font-size:.73rem;color:var(--danger);font-weight:700">⚠ Atrasado</span>`:''}
+        </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+          ${p.tipo==='anual'&&p.loanUid?`<button class="btn btn-ghost" style="font-size:.8rem" onclick="reimprimirComprobante('${p.loanUid}')">🖨 Comprobante</button>`:''}
+          <button class="btn btn-ghost" style="font-size:.8rem" onclick="oEditPrest('${p.uid}')">✏ Editar fecha</button>
+          <button class="btn btn-success" onclick="oDevolver('${p.uid}')">✓ Devolver</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  if(!html) html='<div class="empty">No hay préstamos ni solicitudes pendientes.</div>';
+  el.innerHTML=html;
+}
+
+// ── EDITAR FECHA PRÉSTAMO ─────────────────────────────────────────────────
+function oEditPrest(uid2){
+  const p=prestamos.find(x=>x.uid===uid2);if(!p)return;
+  document.getElementById('ep-uid').value=uid2;
+  document.getElementById('ep-title').textContent=`📖 ${p.libroNombre} — ${p.lector}`;
+  document.getElementById('ep-f').value=p.fechaDevolucion||'';
+  document.getElementById('mp-ep').classList.add('abierto');
+}
+async function saveEditPrest(){
+  const uid2=document.getElementById('ep-uid').value;
+  const p=prestamos.find(x=>x.uid===uid2);if(!p)return;
+  p.fechaDevolucion=document.getElementById('ep-f').value;
+  try{
+    await sbUpdate('prestamos',p._dbId,{fecha_devolucion:p.fechaDevolucion});
+    cm('mp-ep');fp();rPre();
+  }catch(e){alert('Error: '+e.message);}
+}
+
+// ── DEVOLUCIÓN ────────────────────────────────────────────────────────────
+function oDevolver(uid2){
+  const p=prestamos.find(x=>x.uid===uid2);if(!p)return;
+  document.getElementById('dv-uid').value=uid2;
+  document.getElementById('dv-title').textContent=`📖 ${p.libroNombre} — ${p.lector}`;
+  document.getElementById('dv-f').value=hoy();
+  document.getElementById('mp-dv').classList.add('abierto');
+}
+async function confDevolver(){
+  const uid2=document.getElementById('dv-uid').value;
+  const fechaDevuelto=document.getElementById('dv-f').value||hoy();
+  const i=prestamos.findIndex(p=>p.uid===uid2);if(i===-1)return;
+  const p=prestamos[i];
+  const l=libros.find(x=>x.id===p.libroId);
+  const newDisp=l?Math.min(l.disponibles+1,l.cantidad):null;
+  if(l) l.disponibles=newDisp;
+  const histEntry={...p,estado:'devuelto',fechaDevuelto:fechaDevuelto};
+  try{
+    await Promise.all([
+      sbUpdate('prestamos',p._dbId,{estado:'devuelto',fecha_devuelto:fechaDevuelto}),
+      l?sbUpdate('libros',l.id,{disponibles:newDisp}):Promise.resolve(),
+      sbInsert('historial',prestamoToDb({...histEntry,tipo:p.tipo||'regular'}))
+    ]);
+    historial.unshift(histEntry);
+    prestamos.splice(i,1);
+    cm('mp-dv');rPre();upHdr();
+  }catch(e){alert('Error al devolver: '+e.message);}
+}
+
+// ── HISTORIAL ─────────────────────────────────────────────────────────────
+function rHis(){fh()}
+function fh(){
+  const q=document.getElementById('qh').value.toLowerCase().trim();
+  const res=[...historial].reverse().filter(p=>[p.lector,p.libroNombre,p.libroAutor].join(' ').toLowerCase().includes(q));
+  const el=document.getElementById('lh');
+  if(!res.length){el.innerHTML='<div class="empty">El historial está vacío.</div>';return}
+  el.innerHTML=res.map(p=>`
+    <div class="hi">
+      <div style="font-weight:700;color:var(--text-primary)">📖 ${esc(p.libroNombre)}</div>
+      <div style="color:var(--text-muted);margin-top:.25rem"><strong style="color:var(--text-secondary)">Lector:</strong> ${esc(p.lector)}${p.contacto?' · '+esc(p.contacto):''}</div>
+      <div style="color:var(--text-muted);margin-top:.15rem">Prestado: ${fmtF(p.fechaPrestamo)} → Devuelto: <span style="color:${p.fechaDevuelto?'var(--success)':'var(--warning)'};font-weight:700">${p.fechaDevuelto?fmtF(p.fechaDevuelto):'Pendiente'}</span></div>
+    </div>`).join('');
+}
+
+// ── AGREGAR ───────────────────────────────────────────────────────────────
+async function addLibro(){
+  const nombre=document.getElementById('an').value.trim();
+  if(!nombre){alerta('al-ag','El nombre es obligatorio.','err');return}
+  const c=parseInt(document.getElementById('acant').value)||1;
+  const l={nombre,num:document.getElementById('anum').value.trim(),
+    grado:document.getElementById('agr').value.trim(),
+    autor:document.getElementById('aau').value.trim()||'-',
+    area:document.getElementById('aare').value.trim(),
+    vol:document.getElementById('avol').value.trim(),
+    formato:document.getElementById('afmt').value.trim()||'Libro',
+    desc:document.getElementById('adesc').value.trim(),
+    editorial:document.getElementById('aed').value.trim(),
+    coleccion:document.getElementById('acol').value.trim(),
+    isbn:document.getElementById('aisbn').value.trim(),
+    obs:document.getElementById('aobs').value.trim(),
+    ubicacion:document.getElementById('aubic').value.trim(),
+    sala:document.getElementById('asala').value.trim(),
+    cantidad:c,disponibles:c,cover:''};
+  try{
+    const res=await sbInsert('libros',libroToDb(l));
+    libros.push(dbToLibro(res[0]));
+    alerta('al-ag',`✓ "${nombre}" guardado.`,'ok');
+    clrAdd();upHdr();rCat();
+    queueCoversForNew([libros[libros.length-1]]);
+  }catch(e){alerta('al-ag','Error: '+e.message,'err');}
+}
+
+function clrAdd(){
+  ['an','anum','agr','aau','aare','avol','afmt','aed','acol','aisbn','aubic','asala','adesc','aobs'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('acant').value=1;
+}
+
+// ── EDITAR ────────────────────────────────────────────────────────────────
+function oedit(id){
+  const l=libros.find(x=>x.id===id);if(!l)return;
+  document.getElementById('eid').value=id;
+  document.getElementById('en').value=l.nombre||'';
+  document.getElementById('enum2').value=l.num||'';
+  document.getElementById('egr').value=l.grado||'';
+  document.getElementById('eau').value=l.autor||'';
+  document.getElementById('eare').value=l.area||'';
+  document.getElementById('evol').value=l.vol||'';
+  document.getElementById('efmt').value=l.formato||'';
+  document.getElementById('eed').value=l.editorial||'';
+  document.getElementById('ecol').value=l.coleccion||'';
+  document.getElementById('eisbn').value=l.isbn||'';
+  document.getElementById('eubic').value=l.ubicacion||'';
+  document.getElementById('esala').value=l.sala||'';
+  document.getElementById('ecant').value=l.cantidad;
+  document.getElementById('edesc').value=l.desc||'';
+  document.getElementById('eobs').value=l.obs||'';
+  document.getElementById('me').classList.add('abierto');
+}
+
+async function saveEdit(){
+  const id=parseInt(document.getElementById('eid').value);
+  const l=libros.find(x=>x.id===id);if(!l)return;
+  const nc=parseInt(document.getElementById('ecant').value)||1,diff=nc-l.cantidad;
+  l.nombre=document.getElementById('en').value.trim();
+  l.num=document.getElementById('enum2').value.trim();
+  l.grado=document.getElementById('egr').value.trim();
+  l.autor=document.getElementById('eau').value.trim();
+  l.area=document.getElementById('eare').value.trim();
+  l.vol=document.getElementById('evol').value.trim();
+  l.formato=document.getElementById('efmt').value.trim();
+  l.editorial=document.getElementById('eed').value.trim();
+  l.coleccion=document.getElementById('ecol').value.trim();
+  l.isbn=document.getElementById('eisbn').value.trim();
+  l.ubicacion=document.getElementById('eubic').value.trim();
+  l.sala=document.getElementById('esala').value.trim();
+  l.cantidad=nc;l.disponibles=Math.max(0,l.disponibles+diff);
+  l.desc=document.getElementById('edesc').value.trim();
+  l.obs=document.getElementById('eobs').value.trim();
+  try{
+    await sbUpdate('libros',id,libroToDb(l));
+    cm('me');rCat();
+  }catch(e){alert('Error al guardar: '+e.message);}
+}
+
+let delId=null;
+function del(id){
+  const l=libros.find(x=>x.id===id);if(!l)return;
+  if(prestamos.some(p=>p.libroId===id)){alert('Tiene préstamos activos. Registre la devolución primero.');return}
+  delId=id;
+  document.getElementById('mdel-txt').textContent=`"${l.nombre}" será eliminado permanentemente.`;
+  document.getElementById('mdel').classList.add('abierto');
+}
+async function delConfirm(){
+  try{
+    await sbDelete('libros',delId);
+    libros=libros.filter(x=>x.id!==delId);
+    cm('mdel');rCat();
+  }catch(e){alert('Error al eliminar: '+e.message);}
+}
+
+// ── IMPORTAR EXCEL ────────────────────────────────────────────────────────
+function setLog(msg,type=''){
+  const el=document.getElementById('imp-log');
+  if(!el)return;
+  const styles={
+    ok:'color:var(--success);background:var(--success-bg);border-color:#A8DDB5',
+    err:'color:var(--danger);background:var(--danger-bg);border-color:#F0AABB',
+    '':'color:var(--text-muted);background:var(--card-alt);border-color:var(--border)'
+  };
+  el.style.cssText=`margin-top:1rem;padding:.85rem 1rem;border-radius:var(--radius);border:1px solid;font-size:.84rem;min-height:48px;${styles[type]||styles['']}`;
+  el.innerHTML=msg;
+}
+
+function onDrop(ev){
+  ev.preventDefault();
+  document.getElementById('dz').classList.remove('over');
+  const file=ev.dataTransfer.files[0];
+  if(file)prepImport(file,'add');
+}
+
+function prepImport(file,mode){
+  if(!file)return;
+  document.getElementById('fi-add').value='';
+  document.getElementById('fi-rep').value='';
+  if(mode==='replace'){
+    window._repFile=file;
+    document.getElementById('rep-txt').innerHTML=`Archivo: <strong>${file.name}</strong><br>Base actual: <strong>${libros.length} libros</strong>`;
+    document.getElementById('mp-rep').classList.add('abierto');
+  } else {
+    setLog('⏳ Leyendo archivo…');
+    importFile(file,'add');
+  }
+}
+
+function importFile(file,mode){
+  if(!file)return;
+  setLog('⏳ Leyendo archivo…');
+  const reader=new FileReader();
+  reader.onload=async ev=>{
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{defval:'',raw:false});
+      if(!rows.length){setLog('⚠ No se encontraron filas con datos en el archivo.','err');return}
+      const keys=Object.keys(rows[0]);
+      const norm=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z\/]/g,'');
+      const find=(...candidates)=>keys.find(k=>candidates.some(c=>norm(k).includes(norm(c))))||'';
+      const cNum=find('num','nro','numero'),cGrado=find('grado'),
+            cNombre=find('nombre','titulo','title','name'),
+            cArea=find('area','categoria','materia','disciplina'),cAutor=find('autor','author'),
+            cVol=find('vol','tomo'),cFmt=find('formato','format','tipo'),
+            cDesc=find('desc','descripcion'),cEd=find('editorial','publisher'),
+            cCol=find('coleccion','serie','collection'),cIsbn=find('isbn'),
+            cObs=find('observ','obs','nota'),cUbic=find('ubicacion','ubicación'),
+            cSala=find('sala');
+      if(!cNombre){setLog(`❌ No se encontró columna "Nombre". Columnas: <em>${keys.join(', ')}</em>`,'err');return;}
+
+      const nuevos=rows.map(r=>{
+        const nombre=String(r[cNombre]||'').trim();
+        if(!nombre)return null;
+        return{
+          num:String(r[cNum]||'').trim(),grado:String(r[cGrado]||'').trim(),
+          nombre,autor:String(r[cAutor]||'-').trim(),area:String(r[cArea]||'').trim(),
+          vol:String(r[cVol]||'').trim(),formato:String(r[cFmt]||'Libro').trim(),
+          descripcion:String(r[cDesc]||'').trim(),editorial:String(r[cEd]||'').trim(),
+          coleccion:String(r[cCol]||'').trim(),isbn:String(r[cIsbn]||'').trim(),
+          obs:String(r[cObs]||'').trim(),ubicacion:String(r[cUbic]||'').trim(),
+          sala:String(r[cSala]||'').trim(),cantidad:1,disponibles:1,cover:''
+        };
+      }).filter(Boolean);
+      if(!nuevos.length){setLog('⚠ No se encontraron filas válidas.','err');return;}
+
+      setLog(`⏳ Subiendo ${nuevos.length} libros a Supabase…`);
+
+      if(mode==='replace'){
+        // Delete all existing data
+        setLog('⏳ Borrando datos existentes…');
+        await fetch(`${SUPA_URL}/rest/v1/historial?id=gte.0`,{method:'DELETE',headers:{...HEADERS,'Prefer':''}});
+        await fetch(`${SUPA_URL}/rest/v1/prestamos?id=gte.0`,{method:'DELETE',headers:{...HEADERS,'Prefer':''}});
+        await fetch(`${SUPA_URL}/rest/v1/libros?id=gte.0`,{method:'DELETE',headers:{...HEADERS,'Prefer':''}});
+      }
+
+      // Insert in batches of 200
+      const BATCH=200;
+      let inserted=0;
+      for(let i=0;i<nuevos.length;i+=BATCH){
+        const batch=nuevos.slice(i,i+BATCH);
+        await sbInsert('libros',batch);
+        inserted+=batch.length;
+        setLog(`⏳ Subiendo… ${inserted}/${nuevos.length} libros`);
+      }
+
+      // Reload from Supabase
+      const lb=await sbGet('libros','select=*&order=id.asc&limit=5000');
+      libros=lb.map(dbToLibro);
+      if(mode==='replace'){prestamos=[];historial=[];}
+
+      setLog(`✅ <strong>${nuevos.length} libros importados</strong> desde "${file.name}".<br>Base de datos: <strong>${libros.length} títulos</strong>.<br><small>Columnas → Nombre: <em>${cNombre}</em> · Categoría: <em>${cArea||'—'}</em> · Autor: <em>${cAutor||'—'}</em></small>`,'ok');
+      upHdr();
+      populateBusDropdowns();
+      queueCoversForNew(libros.filter(l=>!l.cover));
+    }catch(err){
+      setLog(`❌ Error: ${err.message}`,'err');
+    }
+  };
+  reader.onerror=()=>setLog('❌ No se pudo leer el archivo.','err');
+  reader.readAsArrayBuffer(file);
+}
+
+// ── BUSCADOR USUARIO ──────────────────────────────────────────────────────
+const BUS_DROPDOWNS = new Set(['b-area','b-fmt','b-ed','b-col']);
+
+function buildBusForm(){
+  const campos=[
+    ['b-num','Num.','text'],['b-nombre','Nombre','text'],['b-area','Categoría','select'],
+    ['b-autor','Autor','text'],['b-vol','Vol','text'],['b-fmt','Formato','select'],
+    ['b-desc','Descripción','text'],['b-ed','Editorial','select'],['b-col','Colección','select'],
+    ['b-obs','Observación','text']
+  ];
+  document.getElementById('bus-form').innerHTML=campos.map(([id,lbl,type])=>{
+    const cell = type==='select'
+      ? `<select id="${id}" onchange="buscarLibro()" style="width:100%;border:none;padding:.52rem .85rem;font-size:.88rem;outline:none;background:transparent;color:var(--text-primary);font-family:'Nunito Sans',sans-serif;cursor:pointer;appearance:auto">
+           <option value="">— Todas —</option>
+         </select>`
+      : `<input id="${id}" oninput="buscarLibro()" placeholder="" style="width:100%;border:none;padding:.52rem .85rem;font-size:.88rem;outline:none;background:transparent;color:var(--text-primary);font-family:'Nunito Sans',sans-serif;display:block;box-sizing:border-box">`;
+    return `<tr>
+      <td class="lbl">${lbl}</td>
+      <td class="inp-cell">${cell}</td>
+    </tr>`;
+  }).join('');
+}
+
+function populateBusDropdowns(){
+  const map={
+    'b-area':  [...new Set(libros.map(l=>l.area).filter(x=>x&&x!=='-'))].sort(),
+    'b-fmt':   [...new Set(libros.map(l=>l.formato).filter(x=>x&&x!=='-'))].sort(),
+    'b-ed':    [...new Set(libros.map(l=>l.editorial).filter(x=>x&&x!=='-'))].sort(),
+    'b-col':   [...new Set(libros.map(l=>l.coleccion).filter(x=>x&&x!=='-'))].sort(),
+  };
+  Object.entries(map).forEach(([id,vals])=>{
+    const sel=document.getElementById(id);
+    if(!sel)return;
+    const cur=sel.value;
+    sel.innerHTML=`<option value="">— Todas —</option>`+
+      vals.map(v=>`<option value="${v.replace(/"/g,'&quot;')}">${v}</option>`).join('');
+    sel.value=cur;
+  });
+}
+
+buildBusForm();
+
+function buscarLibro(){
+  const vals={
+    num:document.getElementById('b-num').value.trim().toLowerCase(),
+    nombre:document.getElementById('b-nombre').value.trim().toLowerCase(),
+    area:document.getElementById('b-area').value.trim().toLowerCase(),
+    autor:document.getElementById('b-autor').value.trim().toLowerCase(),
+    vol:document.getElementById('b-vol').value.trim().toLowerCase(),
+    fmt:document.getElementById('b-fmt').value.trim().toLowerCase(),
+    desc:document.getElementById('b-desc').value.trim().toLowerCase(),
+    ed:document.getElementById('b-ed').value.trim().toLowerCase(),
+    col:document.getElementById('b-col').value.trim().toLowerCase(),
+    obs:document.getElementById('b-obs').value.trim().toLowerCase(),
+  };
+  const hayFiltro=Object.values(vals).some(v=>v);
+  const el=document.getElementById('bus-res');
+  if(!hayFiltro){el.innerHTML='';return;}
+  const res=libros.filter(l=>{
+    if(vals.num&&!String(l.num||'').toLowerCase().includes(vals.num))return false;
+    if(vals.nombre&&!String(l.nombre||'').toLowerCase().includes(vals.nombre))return false;
+    if(vals.area&&!String(l.area||'').toLowerCase().includes(vals.area))return false;
+    if(vals.autor&&!String(l.autor||'').toLowerCase().includes(vals.autor))return false;
+    if(vals.vol&&!String(l.vol||'').toLowerCase().includes(vals.vol))return false;
+    if(vals.fmt&&!String(l.formato||'').toLowerCase().includes(vals.fmt))return false;
+    if(vals.desc&&!String(l.desc||'').toLowerCase().includes(vals.desc))return false;
+    if(vals.ed&&!String(l.editorial||'').toLowerCase().includes(vals.ed))return false;
+    if(vals.col&&!String(l.coleccion||'').toLowerCase().includes(vals.col))return false;
+    if(vals.obs&&!String(l.obs||'').toLowerCase().includes(vals.obs))return false;
+    return true;
+  });
+  if(!res.length){
+    el.innerHTML='<div class="bus-result-card" style="text-align:center;color:var(--text-muted);padding:1.5rem">No se encontraron libros con esos criterios.</div>';
+    return;
+  }
+  el.innerHTML=`<div style="font-size:.8rem;color:var(--text-muted);margin-bottom:.6rem;text-align:center;font-weight:700">${res.length} resultado(s) encontrado(s)</div>`+
+  res.map(l=>{
+    const disp=l.disponibles>0;
+    return `<div class="bus-result-card${disp?'':' no-disp'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.8rem;flex-wrap:wrap">
+        ${l.cover?`<img src="${esc(l.cover)}" style="width:52px;height:72px;object-fit:cover;border-radius:4px;border:1px solid var(--border);flex-shrink:0" onerror="this.style.display='none'">`:'<div style="width:52px;height:72px;background:var(--card-alt);border:1px dashed var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">📖</div>'}
+        <div style="flex:1;min-width:160px">
+          <div style="font-weight:800;font-size:.95rem;color:var(--text-primary);font-family:'Nunito',sans-serif">${esc(l.nombre)}</div>
+          ${l.autor&&l.autor!=='-'?`<div style="font-size:.8rem;color:var(--text-muted);margin-top:.15rem">Autor: ${esc(l.autor)}</div>`:''}
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.4rem;font-size:.76rem;color:var(--text-muted)">
+            ${l.num?`<span>NUM: <strong style="color:var(--text-secondary)">${esc(l.num)}</strong></span>`:''}
+            ${l.grado?`<span>Grado: <strong style="color:var(--gold)">${esc(l.grado)}</strong></span>`:''}
+            ${l.area?`<span>Categoría: <strong style="color:var(--text-secondary)">${esc(l.area)}</strong></span>`:''}
+            ${l.formato?`<span>Formato: <strong style="color:var(--text-secondary)">${esc(l.formato)}</strong></span>`:''}
+            ${l.sala?`<span>Sala: <strong style="color:var(--text-secondary)">${esc(l.sala)}</strong></span>`:''}
+          </div>
+          ${l.editorial?`<div style="font-size:.75rem;color:var(--text-muted);margin-top:.2rem">Editorial: ${esc(l.editorial)}${l.coleccion?' · '+esc(l.coleccion):''}</div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.4rem">
+          <span class="badge ${disp?'bd-disp':'bd-agot'}">${disp?`Disponible (${l.disponibles})`:'Agotado'}</span>
+          ${disp?`<button class="btn btn-primary" style="font-size:.76rem;padding:.3rem .75rem" onclick="opre(${l.id})">📤 Solicitar</button>`:`<span style="font-size:.74rem;color:var(--danger);font-weight:700">No disponible</span>`}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function busLimpiar(){
+  ['b-num','b-nombre','b-autor','b-vol','b-desc','b-obs'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value='';
+  });
+  ['b-area','b-fmt','b-ed','b-col'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value='';
+  });
+  document.getElementById('bus-res').innerHTML='';
+}
+
+function cm(id){document.getElementById(id).classList.remove('abierto')}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m&&id!=='mp-pin')m.classList.remove('abierto')}));
+function alerta(cid,msg,tipo){
+  const el=document.getElementById(cid);
+  el.innerHTML=`<div class="alerta al-${tipo}">${msg}</div>`;
+  setTimeout(()=>el.innerHTML='',4000);
+}
+
+// ── PRÉSTAMO ANUAL ────────────────────────────────────────────────────────
+let anSeleccionados = []; // array of libro ids
+
+function oAnual(){
+  anSeleccionados = [];
+  document.getElementById('an-docente').value = '';
+  document.getElementById('an-fecha').value = hoy();
+  document.getElementById('an-devol').value = '';
+  document.getElementById('an-admin').value = '';
+  document.getElementById('an-obs').value = '';
+  document.getElementById('an-q').value = '';
+  document.getElementById('an-resultados').innerHTML = '';
+  document.getElementById('al-anual').innerHTML = '';
+  anRenderSel();
+  document.getElementById('mp-anual').classList.add('abierto');
+}
+
+function anBuscar(){
+  const q = document.getElementById('an-q').value.trim().toLowerCase();
+  const el = document.getElementById('an-resultados');
+  if(!q){el.innerHTML='';return;}
+  const res = libros.filter(l=>{
+    if(anSeleccionados.includes(l.id)) return false; // already selected
+    const t=[l.num,l.nombre,l.autor,l.area,l.coleccion,l.editorial,l.formato].join(' ').toLowerCase();
+    return t.includes(q);
+  }).slice(0,30);
+  if(!res.length){
+    el.innerHTML=`<div style="padding:.7rem;color:var(--text-muted);text-align:center">Sin resultados</div>`;
+    return;
+  }
+  el.innerHTML = res.map(l=>{
+    const disp = l.disponibles > 0;
+    return `<div onclick="${disp?`anAgregar(${l.id})`:'void(0)'}"
+      style="padding:.5rem .8rem;border-bottom:1px solid var(--border);cursor:${disp?'pointer':'default'};display:flex;align-items:center;gap:.6rem;opacity:${disp?1:0.45}"
+      ${disp?'onmouseover="this.style.background=\'var(--surface-hover)\'"':''}
+      onmouseout="this.style.background=''">
+      ${l.cover?`<img src="${esc(l.cover)}" style="width:24px;height:33px;object-fit:cover;border-radius:2px;flex-shrink:0">`:'<div style="width:24px;height:33px;background:var(--card-alt);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0">📖</div>'}
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(l.nombre)}${l.vol?' — Vol.'+esc(l.vol):''}</div>
+        <div style="font-size:.72rem;color:var(--text-muted)">NUM: ${esc(l.num||'—')} · ${esc(l.autor||'—')} · ${esc(l.area||'—')}</div>
+      </div>
+      <span style="font-size:.7rem;font-weight:700;color:${disp?'var(--success)':'var(--danger)'};white-space:nowrap">${disp?'Disponible':'Sin stock'}</span>
+      ${disp?'<span style="color:var(--gold);font-size:1rem">＋</span>':''}
+    </div>`;
+  }).join('');
+}
+
+function anAgregar(id){
+  if(anSeleccionados.includes(id)) return;
+  const l = libros.find(x=>x.id===id);
+  if(!l||l.disponibles===0) return;
+  anSeleccionados.push(id);
+  anRenderSel();
+  // Refresh search to remove added book
+  anBuscar();
+}
+
+function anQuitar(id){
+  anSeleccionados = anSeleccionados.filter(x=>x!==id);
+  anRenderSel();
+  anBuscar();
+}
+
+function anLimpiarSel(){
+  anSeleccionados = [];
+  anRenderSel();
+  anBuscar();
+}
+
+function anRenderSel(){
+  const el = document.getElementById('an-seleccionados');
+  const count = document.getElementById('an-count');
+  count.textContent = anSeleccionados.length;
+  if(!anSeleccionados.length){
+    el.innerHTML='<div style="color:var(--text-muted);padding:.6rem;text-align:center">Ningún libro seleccionado todavía</div>';
+    return;
+  }
+  el.innerHTML = anSeleccionados.map((id,i)=>{
+    const l = libros.find(x=>x.id===id);
+    if(!l) return '';
+    return `<div style="padding:.4rem .7rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.6rem;background:#fff">
+      <span style="font-size:.72rem;color:var(--text-muted);width:20px;text-align:right;flex-shrink:0">${i+1}.</span>
+      ${l.cover?`<img src="${esc(l.cover)}" style="width:22px;height:30px;object-fit:cover;border-radius:2px;flex-shrink:0">`:''}
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:.83rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(l.nombre)}${l.vol?' — Vol.'+esc(l.vol):''}</div>
+        <div style="font-size:.7rem;color:var(--text-muted)">NUM: ${esc(l.num||'—')} · ${esc(l.area||'—')}</div>
+      </div>
+      <button onclick="anQuitar(${id})" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:1rem;padding:.1rem .3rem;flex-shrink:0">✕</button>
+    </div>`;
+  }).join('');
+}
+
+async function confAnual(){
+  const docente = document.getElementById('an-docente').value.trim();
+  const devol   = document.getElementById('an-devol').value;
+  const admin   = document.getElementById('an-admin').value.trim();
+  if(!docente){alerta('al-anual','El nombre del docente es obligatorio.','err');return;}
+  if(!devol){alerta('al-anual','La fecha de devolución es obligatoria.','err');return;}
+  if(!admin){alerta('al-anual','El nombre del administrador es obligatorio.','err');return;}
+  if(!anSeleccionados.length){alerta('al-anual','Agregá al menos un libro.','err');return;}
+
+  const fecha  = document.getElementById('an-fecha').value || hoy();
+  const obs    = document.getElementById('an-obs').value.trim();
+  const loanUid = uid();
+  const nuevosP=[];
+
+  // Build loan records
+  for(const id of anSeleccionados){
+    const l = libros.find(x=>x.id===id);
+    if(!l||l.disponibles===0) continue;
+    l.disponibles--;
+    const p={uid:uid(),loanUid,libroId:id,libroNombre:l.nombre,libroAutor:l.autor,
+      libroArea:l.area,libroNum:l.num,libroVol:l.vol,
+      lector:docente,contacto:'',fechaSolicitud:fecha,fechaPrestamo:fecha,
+      fechaDevolucion:devol,aprobadoPor:admin,obs,estado:'activo',tipo:'anual'};
+    nuevosP.push(p);
+  }
+
+  try{
+    // Insert all loans + update book stock in parallel
+    await Promise.all([
+      sbInsert('prestamos', nuevosP.map(prestamoToDb)),
+      ...nuevosP.map(p=>{
+        const l=libros.find(x=>x.id===p.libroId);
+        return l?sbUpdate('libros',l.id,{disponibles:l.disponibles}):Promise.resolve();
+      })
+    ]);
+    // Reload prestamos to get _dbId
+    const pr=await sbGet('prestamos','select=*&estado=neq.devuelto&order=id.asc');
+    prestamos=pr.map(dbToPrestamo);
+    nuevosP.forEach(p=>prestamos.find(x=>x.uid===p.uid)&&(p._dbId=prestamos.find(x=>x.uid===p.uid)._dbId));
+
+    imprimirComprobante({docente, fecha, devol, admin, obs, loanUid});
+    cm('mp-anual');
+    rPre(); rCat(); upHdr();
+  }catch(e){alerta('al-anual','Error: '+e.message,'err');}
+}
+
+function imprimirComprobante({docente, fecha, devol, admin, obs, loanUid}){
+  const librosLoan = prestamos.filter(p=>p.loanUid===loanUid);
+
+  const filas = librosLoan.map((p,i)=>`
+    <tr>
+      <td class="num">${esc(p.libroNum||'—')}</td>
+      <td style="font-weight:600">${esc(p.libroNombre)}${p.libroVol?' — Vol.'+esc(p.libroVol):''}</td>
+      <td>${esc(p.libroArea||'—')}</td>
+      <td class="check">☐</td>
+    </tr>`).join('');
+
+  const html = `
+    <div class="recibo-page">
+      <div class="recibo-header">
+        <h1>Biblioteca Colegio Aldea</h1>
+        <h2>Comprobante de Préstamo Anual</h2>
+      </div>
+
+      <div class="recibo-meta">
+        <div class="campo">
+          <span class="lbl">Docente</span>
+          <span class="val">${esc(docente)}</span>
+        </div>
+        <div class="campo">
+          <span class="lbl">Fecha de entrega</span>
+          <span class="val">${fmtF(fecha)}</span>
+        </div>
+        <div class="campo">
+          <span class="lbl">Fecha de devolución</span>
+          <span class="val">${fmtF(devol)}</span>
+        </div>
+        <div class="campo">
+          <span class="lbl">Total de libros</span>
+          <span class="val">${librosLoan.length} libro(s)</span>
+        </div>
+      </div>
+
+      ${obs?`<div class="recibo-obs"><strong>Observaciones:</strong> ${esc(obs)}</div>`:''}
+
+      <table class="recibo-table">
+        <thead>
+          <tr>
+            <th class="num">NUM</th>
+            <th>Título</th>
+            <th>Categoría</th>
+            <th class="check">✓</th>
+          </tr>
+        </thead>
+        <tbody>${filas}</tbody>
+      </table>
+
+      <div class="recibo-firmas">
+        <div class="recibo-firma">
+          <div style="margin-bottom:2rem">&nbsp;</div>
+          Firma del docente
+          <div style="margin-top:.3rem;font-weight:700">${esc(docente)}</div>
+        </div>
+        <div class="recibo-firma">
+          <div style="margin-bottom:2rem">&nbsp;</div>
+          Firma del bibliotecario
+          <div style="margin-top:.3rem;font-weight:700">${esc(admin)}</div>
+        </div>
+      </div>
+
+      <div class="recibo-footer">
+        Generado el ${fmtF(hoy())} · Biblioteca Colegio Aldea · Ref: ${loanUid}
+      </div>
+    </div>`;
+
+  document.getElementById('recibo-content').innerHTML = html;
+  document.getElementById('recibo-print').style.display = 'block';
+  window.print();
+  document.getElementById('recibo-print').style.display = 'none';
+}
+
+function reimprimirComprobante(loanUid){
+  const loans = prestamos.filter(p=>p.loanUid===loanUid);
+  if(!loans.length) return;
+  const p = loans[0];
+  imprimirComprobante({
+    docente: p.lector,
+    fecha:   p.fechaPrestamo||p.fechaSolicitud,
+    devol:   p.fechaDevolucion,
+    admin:   p.aprobadoPor||'—',
+    obs:     p.obs||'',
+    loanUid
+  });
+}
+
+// ── COVER SYSTEM ─────────────────────────────────────────────────────────
+let coverQueue=[];
+let coverRunning=false;
+let coverCoverId=null; // book id currently being picked
+
+async function fetchCover(libro){
+  // Try ISBN first, then title+author
+  const queries=[];
+  if(libro.isbn&&libro.isbn!=='-'&&libro.isbn.trim()){
+    queries.push(`isbn:${libro.isbn.trim()}`);
+  }
+  const q=[libro.nombre,libro.autor&&libro.autor!=='-'?libro.autor:''].filter(Boolean).join(' ').trim();
+  if(q) queries.push(q);
+
+  for(const query of queries){
+    try{
+      const url=`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=1&fields=items(volumeInfo/imageLinks)`;
+      const res=await fetch(url);
+      if(!res.ok) continue;
+      const data=await res.json();
+      const img=data?.items?.[0]?.volumeInfo?.imageLinks;
+      if(img){
+        // Prefer higher res: extraLarge > large > medium > thumbnail
+        const cover=(img.extraLarge||img.large||img.medium||img.thumbnail||'')
+          .replace('http://','https://').replace('&edge=curl','');
+        if(cover) return cover;
+      }
+    }catch(e){/* network error, skip */}
+  }
+  return null;
+}
+
+async function runCoverQueue(){
+  if(coverRunning) return;
+  coverRunning=true;
+  const prog=document.getElementById('cover-progress');
+  let done=0;
+  const total=coverQueue.length;
+
+  while(coverQueue.length>0){
+    const libro=coverQueue.shift();
+    // Skip if cover was set manually while we were waiting
+    const current=libros.find(l=>l.id===libro.id);
+    if(!current||current.cover){done++;continue;}
+
+    const cover=await fetchCover(libro);
+    if(cover){
+      const l=libros.find(x=>x.id===libro.id);
+      if(l){l.cover=cover;sbUpdate('libros',l.id,{cover}).catch(()=>{});}
+    }
+    done++;
+    if(prog){
+      prog.style.display='block';
+      prog.textContent=`🖼 Buscando portadas… ${done}/${total}`;
+    }
+    // Small delay to avoid rate limiting
+    await new Promise(r=>setTimeout(r,300));
+  }
+
+  coverRunning=false;
+  if(prog){
+    prog.textContent=`✅ Portadas completadas`;
+    setTimeout(()=>{prog.style.display='none';prog.textContent='';},3000);
+  }
+  // Refresh table to show newly loaded covers
+  if(vistaAct==='cat') rTabla();
+}
+
+function queueCoversForNew(nuevos){
+  // Only queue books without covers
+  const toFetch=nuevos.filter(l=>!l.cover);
+  if(!toFetch.length) return;
+  coverQueue.push(...toFetch);
+  // Start background processing after a short delay
+  setTimeout(runCoverQueue, 1500);
+}
+
+// ── MANUAL COVER PICKER ───────────────────────────────────────────────────
+async function oCover(id){
+  const l=libros.find(x=>x.id===id);if(!l)return;
+  coverCoverId=id;
+  document.getElementById('cov-title').textContent=`📖 ${l.nombre}${l.autor&&l.autor!=='-'?' — '+l.autor:''}`;
+  document.getElementById('cov-options').innerHTML=`<div style="color:var(--text-muted);font-size:.83rem;padding:1rem">🔍 Buscando portadas…</div>`;
+  document.getElementById('cov-url').value=l.cover||'';
+  const prev=document.getElementById('cov-preview');
+  if(l.cover){prev.src=l.cover;prev.style.display='block';}
+  else prev.style.display='none';
+  document.getElementById('mp-cov').classList.add('abierto');
+
+  // Fetch up to 4 results
+  const queries=[];
+  if(l.isbn&&l.isbn!=='-') queries.push(`isbn:${l.isbn.trim()}`);
+  queries.push(`${l.nombre} ${l.autor&&l.autor!=='-'?l.autor:''}`.trim());
+  if(l.editorial&&l.editorial!=='-') queries.push(`${l.nombre} ${l.editorial}`.trim());
+
+  const covers=new Map();
+  for(const q of queries){
+    try{
+      const url=`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=4&fields=items(id,volumeInfo/title,volumeInfo/imageLinks)`;
+      const res=await fetch(url);
+      if(!res.ok) continue;
+      const data=await res.json();
+      (data?.items||[]).forEach(item=>{
+        const img=item.volumeInfo?.imageLinks;
+        if(!img) return;
+        const src=(img.extraLarge||img.large||img.medium||img.thumbnail||'')
+          .replace('http://','https://').replace('&edge=curl','');
+        if(src&&!covers.has(src)) covers.set(src,item.volumeInfo?.title||'');
+      });
+    }catch(e){}
+  }
+
+  const opts=document.getElementById('cov-options');
+  if(covers.size===0){
+    opts.innerHTML=`<div style="color:var(--text-muted);font-size:.83rem;padding:1rem;text-align:center">No se encontraron portadas automáticamente.<br>Podés pegar una URL personalizada abajo.</div>`;
+    return;
+  }
+  opts.innerHTML=[...covers.entries()].map(([src,title])=>`
+    <div onclick="selectCoverOption(this,'${src.replace(/'/g,"\\'")}')"
+      style="cursor:pointer;border:2px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:.15s;flex-shrink:0"
+      title="${esc(title)}">
+      <img src="${esc(src)}" style="width:80px;height:110px;object-fit:cover;display:block"
+        onerror="this.parentElement.style.display='none'">
+    </div>`).join('');
+}
+
+function selectCoverOption(el,src){
+  document.querySelectorAll('#cov-options div').forEach(d=>d.style.borderColor='var(--border)');
+  el.style.borderColor='var(--gold)';
+  document.getElementById('cov-url').value=src;
+  const prev=document.getElementById('cov-preview');
+  prev.src=src;prev.style.display='block';
+}
+
+function previewCustomCover(){
+  const src=document.getElementById('cov-url').value.trim();
+  if(!src) return;
+  const prev=document.getElementById('cov-preview');
+  prev.src=src;prev.style.display='block';
+}
+
+async function saveCover(){
+  const id=coverCoverId;
+  const src=document.getElementById('cov-url').value.trim();
+  const l=libros.find(x=>x.id===id);if(!l) return;
+  l.cover=src||'';
+  await sbUpdate('libros',id,{cover:l.cover}).catch(()=>{});
+  cm('mp-cov');
+  if(vistaAct==='cat') rTabla();
+}
+
+async function removeCover(){
+  const l=libros.find(x=>x.id===coverCoverId);if(!l) return;
+  l.cover='';
+  await sbUpdate('libros',l.id,{cover:''}).catch(()=>{});
+  cm('mp-cov');
+  if(vistaAct==='cat') rTabla();
+}
+
+// ── PIN LOCK ──────────────────────────────────────────────────────────────
+const ADMIN_PIN='1234'; // ← Change this to your preferred 4-digit PIN
+let pinBuffer='';
+let adminUnlocked=false;
+
+function toggleLock(){
+  if(adminUnlocked){
+    adminUnlocked=false;
+    document.getElementById('admin-tabs').style.display='none';
+    document.getElementById('lock-btn').innerHTML='🔒 Admin';
+    document.getElementById('lock-btn').style.color='rgba(255,255,255,.6)';
+    // Return to Buscador
+    document.querySelectorAll('.vista').forEach(v=>v.classList.remove('activa'));
+    document.querySelectorAll('nav button:not(#lock-btn)').forEach(b=>b.classList.remove('active'));
+    document.getElementById('vista-bus').classList.add('activa');
+    document.querySelector('nav button').classList.add('active');
+  } else {
+    pinBuffer='';
+    updatePinDots();
+    document.getElementById('pin-err').textContent='';
+    document.querySelectorAll('.pd').forEach(d=>{d.classList.remove('filled','error')});
+    document.getElementById('mp-pin').classList.add('abierto');
+  }
+}
+
+function pinKey(d){
+  if(pinBuffer.length>=4)return;
+  pinBuffer+=d;
+  updatePinDots();
+  if(pinBuffer.length===4)setTimeout(pinSubmit,120);
+}
+
+function pinDel(){
+  pinBuffer=pinBuffer.slice(0,-1);
+  updatePinDots();
+}
+
+function updatePinDots(){
+  document.querySelectorAll('.pd').forEach((d,i)=>{
+    d.classList.toggle('filled',i<pinBuffer.length);
+    d.classList.remove('error');
+  });
+}
+
+function pinSubmit(){
+  if(pinBuffer===ADMIN_PIN){
+    adminUnlocked=true;
+    document.getElementById('mp-pin').classList.remove('abierto');
+    document.getElementById('admin-tabs').style.display='contents';
+    document.getElementById('lock-btn').innerHTML='🔓 Admin';
+    document.getElementById('lock-btn').style.color='var(--gold)';
+    // Auto-navigate to Catálogo after unlock
+    const catBtn=document.querySelectorAll('nav button')[2];
+    sv('cat',catBtn);
+  } else {
+    document.querySelectorAll('.pd').forEach(d=>{d.classList.add('error');d.classList.remove('filled')});
+    document.getElementById('pin-err').textContent='PIN incorrecto. Intentá de nuevo.';
+    pinBuffer='';
+    setTimeout(updatePinDots,900);
+  }
+}
+
+// Keyboard support for PIN modal
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('mp-pin').classList.contains('abierto'))return;
+  if(e.key>='0'&&e.key<='9')pinKey(e.key);
+  else if(e.key==='Backspace')pinDel();
+  else if(e.key==='Enter')pinSubmit();
+  else if(e.key==='Escape')document.getElementById('mp-pin').classList.remove('abierto');
+});
+
+// Prevent closing PIN modal by clicking outside
+document.getElementById('mp-pin').addEventListener('click',e=>e.stopPropagation());
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+buildBusForm();
+loadAll();
+</script>
+</body>
+</html>
