@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Biblioteca Aldea</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 /* ── RESET & BASE ─────────────────────────────────────────────────────────── */
@@ -188,7 +189,7 @@ main{max-width:1380px;margin:0 auto;padding:1.2rem 1rem}
 /* ── TABLE ───────────────────────────────────────────────────────────────── */
 .tbl-wrap{overflow-x:auto;border-radius:var(--radius-lg);border:1px solid var(--border);box-shadow:0 1px 6px rgba(0,0,0,.06)}
 table{width:100%;border-collapse:collapse;background:var(--card-bg);font-size:.8rem;min-width:1100px}
-thead{background:var(--brown-header)}
+thead{background:var(--brown-header);position:sticky;top:0;z-index:10}
 th{
   padding:.65rem .85rem;text-align:left;
   font-weight:800;color:rgba(255,255,255,.75);
@@ -507,14 +508,16 @@ tr:hover td{background:var(--card-alt)}
 <!-- ══ NAV ════════════════════════════════════════════════════════════════ -->
 <nav>
   <button class="active" onclick="sv('bus',this)">🔍 Buscador</button>
-  <span id="admin-tabs" style="display:none;contents:contents">
-    <button onclick="sv('add',this)">＋ Registrar libro</button>
-    <button onclick="sv('cat',this)">📋 Catálogo</button>
-    <button onclick="sv('pre',this)">📤 Préstamos</button>
-    <button onclick="sv('his',this)">🕓 Historial</button>
-    <button onclick="sv('imp',this)">📥 Importar Excel</button>
-  </span>
-  <button id="lock-btn" onclick="toggleLock()" style="margin-left:auto;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);font-size:.75rem;padding:.4rem .8rem;border-radius:var(--radius);border:1px solid rgba(255,255,255,.2)">🔒 Admin</button>
+  <button id="nav-add" onclick="sv('add',this)" style="display:none">＋ Registrar libro</button>
+  <button id="nav-cat" onclick="sv('cat',this)" style="display:none">📋 Catálogo</button>
+  <button id="nav-pre" onclick="sv('pre',this)" style="display:none">📤 Préstamos</button>
+  <button id="nav-his" onclick="sv('his',this)" style="display:none">🕓 Historial</button>
+  <button id="nav-imp" onclick="sv('imp',this)" style="display:none">📥 Importar Excel</button>
+  <button id="nav-usr" onclick="sv('usr',this)" style="display:none">👥 Usuarios</button>
+  <div style="margin-left:auto;display:flex;gap:.4rem;align-items:center">
+    <span id="session-label" style="font-size:.72rem;color:rgba(255,255,255,.5);display:none"></span>
+    <button id="lock-btn" onclick="toggleLock()" style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);font-size:.75rem;padding:.4rem .8rem;border-radius:var(--radius);border:1px solid rgba(255,255,255,.2)">🔒 Iniciar sesión</button>
+  </div>
 </nav>
 
 <main>
@@ -553,6 +556,19 @@ tr:hover td{background:var(--card-alt)}
     <button class="btn btn-amber" onclick="oAnual()">📋 Préstamo Anual</button>
   </div>
   <div id="lp"></div>
+</div>
+
+<!-- ══ USUARIOS ══════════════════════════════════════════════════════════ -->
+<div class="vista" id="vista-usr">
+  <div style="max-width:700px">
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <h2 style="margin-bottom:0">👥 Usuarios temporales</h2>
+        <button class="btn btn-primary" onclick="oNewUser()">＋ Nuevo usuario</button>
+      </div>
+      <div id="usr-list"></div>
+    </div>
+  </div>
 </div>
 
 <!-- ══ HISTORIAL ════════════════════════════════════════════════════════ -->
@@ -772,9 +788,14 @@ tr:hover td{background:var(--card-alt)}
     <div style="background:var(--danger-bg);border:1px solid #F0AABB;border-radius:var(--radius);padding:.7rem;margin-bottom:1.2rem;font-size:.82rem;color:var(--danger);font-weight:700">
       Se borrarán TODOS los libros, préstamos e historial actuales.<br>Esta acción no se puede deshacer.
     </div>
+    <div class="fi" style="margin-bottom:.8rem;text-align:left">
+      <label>Ingresá el código de seguridad para confirmar</label>
+      <input id="rep-code" type="password" placeholder="Código de seguridad" style="text-align:center;letter-spacing:4px;font-size:1rem">
+      <div id="rep-code-err" style="font-size:.78rem;color:var(--danger);min-height:1rem;margin-top:.2rem"></div>
+    </div>
     <div class="mf" style="justify-content:center">
       <button class="btn btn-ghost" onclick="cm('mp-rep');setLog('Importación cancelada.')">Cancelar</button>
-      <button class="btn btn-danger" onclick="cm('mp-rep');importFile(window._repFile,'replace')">Sí, reemplazar todo</button>
+      <button class="btn btn-danger" onclick="checkRepCode()">Sí, reemplazar todo</button>
     </div>
   </div>
 </div>
@@ -849,6 +870,65 @@ tr:hover td{background:var(--card-alt)}
   </div>
 </div>
 
+<!-- ══ MODAL LOGIN ══════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="mp-login">
+  <div class="modal" style="max-width:360px;text-align:center">
+    <div style="font-size:2rem;margin-bottom:.4rem">🔒</div>
+    <h2 style="text-align:center;margin-bottom:1rem">Iniciar sesión</h2>
+    <div class="fg" style="grid-template-columns:1fr;text-align:left">
+      <div class="fi"><label>Usuario</label><input id="login-user" placeholder="Nombre de usuario" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="fi"><label>PIN</label><input id="login-pin" type="password" placeholder="PIN" maxlength="10" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    </div>
+    <div id="login-err" style="font-size:.8rem;color:var(--danger);min-height:1.2rem;margin-top:.5rem"></div>
+    <div class="mf" style="justify-content:center;margin-top:.8rem">
+      <button class="btn btn-ghost" onclick="cm('mp-login')">Cancelar</button>
+      <button class="btn btn-primary" onclick="doLogin()">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL NUEVO/EDITAR USUARIO ══════════════════════════════════════ -->
+<div class="modal-overlay" id="mp-usr">
+  <div class="modal" style="max-width:480px">
+    <h2 id="usr-modal-title">＋ Nuevo usuario</h2>
+    <input type="hidden" id="usr-edit-id">
+    <div class="fg">
+      <div class="fi full"><label>Nombre de usuario *</label><input id="usr-nombre" placeholder="Ej: Profe María"></div>
+      <div class="fi"><label>PIN *</label><input id="usr-pin" type="password" placeholder="PIN de acceso" maxlength="10"></div>
+      <div class="fi"><label>Fecha de expiración (opcional)</label><input id="usr-exp" type="date"></div>
+    </div>
+    <div style="margin-top:1rem;border-top:1px solid var(--border);padding-top:.9rem">
+      <div style="font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);margin-bottom:.6rem;font-family:'Nunito',sans-serif">Permisos de acceso</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem">
+        <label style="display:flex;align-items:center;gap:.5rem;font-size:.84rem;cursor:pointer;padding:.4rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card-alt)">
+          <input type="checkbox" id="perm-add"> ＋ Registrar libro
+        </label>
+        <label style="display:flex;align-items:center;gap:.5rem;font-size:.84rem;cursor:pointer;padding:.4rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card-alt)">
+          <input type="checkbox" id="perm-cat"> 📋 Catálogo
+        </label>
+        <label style="display:flex;align-items:center;gap:.5rem;font-size:.84rem;cursor:pointer;padding:.4rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card-alt)">
+          <input type="checkbox" id="perm-pre"> 📤 Préstamos
+        </label>
+        <label style="display:flex;align-items:center;gap:.5rem;font-size:.84rem;cursor:pointer;padding:.4rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card-alt)">
+          <input type="checkbox" id="perm-his"> 🕓 Historial
+        </label>
+        <label style="display:flex;align-items:center;gap:.5rem;font-size:.84rem;cursor:pointer;padding:.4rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card-alt)">
+          <input type="checkbox" id="perm-imp"> 📥 Importar Excel
+        </label>
+      </div>
+      <div style="margin-top:.6rem;display:flex;gap:.5rem">
+        <button class="btn btn-ghost" style="font-size:.76rem" onclick="setRolePreset('bibliotecario')">Preset: Bibliotecario</button>
+        <button class="btn btn-ghost" style="font-size:.76rem" onclick="setRolePreset('docente')">Preset: Docente</button>
+      </div>
+    </div>
+    <div id="al-usr"></div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="cm('mp-usr')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveUser()">Guardar usuario</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ MODAL ELIMINAR ════════════════════════════════════════════════════ -->
 <div class="modal-overlay" id="mdel">
   <div class="modal" style="max-width:380px">
@@ -892,6 +972,39 @@ tr:hover td{background:var(--card-alt)}
 
 <!-- ══ JAVASCRIPT ══════════════════════════════════════════════════════ -->
 <script>
+// ── EMAILJS CONFIG ────────────────────────────────────────────────────────
+// To enable email notifications:
+// 1. Create a free account at emailjs.com
+// 2. Add your email service and create a template
+// 3. Fill in the values below
+const EMAILJS_PUBLIC_KEY   = 'ZpRed8xr2tcUTri_p';
+const EMAILJS_SERVICE_ID   = 'service_8sc5jgp';
+const EMAILJS_TEMPLATE_ID  = 'template_diqjzhj';
+const ADMIN_EMAIL          = 'fi_a_lopez@hotmail.com';
+
+function initEmailJS(){
+  if(EMAILJS_PUBLIC_KEY) emailjs.init(EMAILJS_PUBLIC_KEY);
+}
+
+async function notifyNewSolicitud(libro, solicitante, contacto){
+  if(!EMAILJS_PUBLIC_KEY||!EMAILJS_SERVICE_ID||!EMAILJS_TEMPLATE_ID) return;
+  try{
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_email:    ADMIN_EMAIL,
+      libro_nombre:libro.nombre,
+      libro_num:   libro.num||'—',
+      libro_area:  libro.area||'—',
+      libro_sala:  libro.sala||'—',
+      solicitante,
+      contacto:    contacto||'No proporcionado',
+      fecha:       new Date().toLocaleDateString('es-ES'),
+      app_url:     window.location.href,
+    });
+  }catch(e){
+    console.warn('Email notification failed:', e);
+  }
+}
+
 // ── SUPABASE CONFIG ───────────────────────────────────────────────────────
 const SUPA_URL = 'https://mlbpjbheugfqbffxutaf.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1sYnBqYmhldWdmcWJmZnh1dGFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNTgwMzksImV4cCI6MjA5NTkzNDAzOX0.vFoIEfOctQV8VkWH7aJU9YbDaU7GrgFSG9c0IpL7H1c';
@@ -908,12 +1021,14 @@ async function sbInsert(table, data){
   return r.json();
 }
 async function sbUpdate(table, id, data){
-  const r=await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${id}`,{method:'PATCH',headers:HEADERS,body:JSON.stringify(data)});
+  const filter=typeof id==='string'&&isNaN(id)?`id=eq.${encodeURIComponent(id)}`:`id=eq.${id}`;
+  const r=await fetch(`${SUPA_URL}/rest/v1/${table}?${filter}`,{method:'PATCH',headers:HEADERS,body:JSON.stringify(data)});
   if(!r.ok) throw new Error(await r.text());
   return r.json();
 }
 async function sbDelete(table, id){
-  const r=await fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${id}`,{method:'DELETE',headers:{...HEADERS,'Prefer':''}});
+  const filter=typeof id==='string'&&isNaN(id)?`id=eq.${encodeURIComponent(id)}`:`id=eq.${id}`;
+  const r=await fetch(`${SUPA_URL}/rest/v1/${table}?${filter}`,{method:'DELETE',headers:{...HEADERS,'Prefer':''}});
   if(!r.ok) throw new Error(await r.text());
 }
 async function sbUpsert(table, data, onConflict='uid'){
@@ -992,6 +1107,7 @@ async function loadAll(){
     libros    = lb.map(dbToLibro);
     prestamos = pr.map(dbToPrestamo);
     historial = hi.map(dbToPrestamo);
+    await loadUsers();
     upHdr();
     rCat();
     populateBusDropdowns();
@@ -1041,11 +1157,12 @@ function sv(id,btn){
   document.querySelectorAll('.vista').forEach(v=>v.classList.remove('activa'));
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
   document.getElementById('vista-'+id).classList.add('activa');
-  btn.classList.add('active');
+  if(btn) btn.classList.add('active');
   vistaAct=id;
   if(id==='cat')rCat();
   if(id==='pre')rPre();
   if(id==='his')rHis();
+  if(id==='usr')rUsrList();
 }
 
 
@@ -1173,6 +1290,7 @@ async function confSolicitud(){
     p._dbId=res[0].id;
     prestamos.push(p);
     cm('mp');upHdr();
+    notifyNewSolicitud(l, solicitante, document.getElementById('mp-c').value.trim());
     document.getElementById('bus-res').innerHTML=`
       <div class="bus-result-card" style="border-color:var(--success);background:var(--success-bg);text-align:center;padding:1.5rem">
         <div style="font-size:1.5rem;margin-bottom:.4rem">✅</div>
@@ -1485,6 +1603,8 @@ function prepImport(file,mode){
   if(mode==='replace'){
     window._repFile=file;
     document.getElementById('rep-txt').innerHTML=`Archivo: <strong>${file.name}</strong><br>Base actual: <strong>${libros.length} libros</strong>`;
+    document.getElementById('rep-code').value='';
+    document.getElementById('rep-code-err').textContent='';
     document.getElementById('mp-rep').classList.add('abierto');
   } else {
     setLog('⏳ Leyendo archivo…');
@@ -1659,6 +1779,10 @@ function buscarLibro(){
             ${l.sala?`<span>Sala: <strong style="color:var(--text-secondary)">${esc(l.sala)}</strong></span>`:''}
           </div>
           ${l.editorial?`<div style="font-size:.75rem;color:var(--text-muted);margin-top:.2rem">Editorial: ${esc(l.editorial)}${l.coleccion?' · '+esc(l.coleccion):''}</div>`:''}
+          ${l.desc?`<div style="margin-top:.45rem">
+            <div id="desc-${l.id}" style="font-size:.78rem;color:var(--text-secondary);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer" onclick="toggleDesc(${l.id})" title="Clic para ver completo">${esc(l.desc)}</div>
+            ${l.desc.length>120?`<span onclick="toggleDesc(${l.id})" style="font-size:.72rem;color:var(--gold);cursor:pointer;font-weight:700" id="desc-btn-${l.id}">Ver más ▾</span>`:''}
+          </div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.4rem">
           <span class="badge ${disp?'bd-disp':'bd-agot'}">${disp?`Disponible (${l.disponibles})`:'Agotado'}</span>
@@ -1667,6 +1791,16 @@ function buscarLibro(){
       </div>
     </div>`;
   }).join('');
+}
+
+function toggleDesc(id){
+  const el=document.getElementById('desc-'+id);
+  const btn=document.getElementById('desc-btn-'+id);
+  if(!el)return;
+  const expanded=el.style.webkitLineClamp==='unset';
+  el.style.webkitLineClamp=expanded?'2':'unset';
+  el.style.overflow=expanded?'hidden':'visible';
+  if(btn)btn.textContent=expanded?'Ver más ▾':'Ver menos ▴';
 }
 
 function busLimpiar(){
@@ -1919,15 +2053,38 @@ let coverQueue=[];
 let coverRunning=false;
 let coverCoverId=null; // book id currently being picked
 
-async function fetchCover(libro){
-  // Try ISBN first, then title+author
-  const queries=[];
-  if(libro.isbn&&libro.isbn!=='-'&&libro.isbn.trim()){
-    queries.push(`isbn:${libro.isbn.trim()}`);
+async function fetchCoverOpenLibrary(isbn, title, autor){
+  // Try ISBN first
+  if(isbn&&isbn!=='-'&&isbn.trim()){
+    try{
+      const url=`https://covers.openlibrary.org/b/isbn/${isbn.trim()}-L.jpg?default=false`;
+      const res=await fetch(url,{method:'HEAD'});
+      if(res.ok&&res.headers.get('content-type')?.includes('image')){
+        return `https://covers.openlibrary.org/b/isbn/${isbn.trim()}-L.jpg`;
+      }
+    }catch(e){}
   }
-  const q=[libro.nombre,libro.autor&&libro.autor!=='-'?libro.autor:''].filter(Boolean).join(' ').trim();
+  // Try title search
+  try{
+    const q=encodeURIComponent(`${title} ${autor&&autor!=='-'?autor:''}`.trim());
+    const url=`https://openlibrary.org/search.json?q=${q}&limit=1&fields=cover_i`;
+    const res=await fetch(url);
+    if(!res.ok) return null;
+    const data=await res.json();
+    const coverId=data?.docs?.[0]?.cover_i;
+    if(coverId) return `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`;
+  }catch(e){}
+  return null;
+}
+
+async function fetchCover(libro){
+  const {isbn,nombre,autor} = libro;
+  const queries=[];
+  if(isbn&&isbn!=='-'&&isbn.trim()) queries.push(`isbn:${isbn.trim()}`);
+  const q=[nombre,autor&&autor!=='-'?autor:''].filter(Boolean).join(' ').trim();
   if(q) queries.push(q);
 
+  // 1. Google Books
   for(const query of queries){
     try{
       const url=`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=1&fields=items(volumeInfo/imageLinks)`;
@@ -1936,13 +2093,17 @@ async function fetchCover(libro){
       const data=await res.json();
       const img=data?.items?.[0]?.volumeInfo?.imageLinks;
       if(img){
-        // Prefer higher res: extraLarge > large > medium > thumbnail
         const cover=(img.extraLarge||img.large||img.medium||img.thumbnail||'')
           .replace('http://','https://').replace('&edge=curl','');
         if(cover) return cover;
       }
-    }catch(e){/* network error, skip */}
+    }catch(e){}
   }
+
+  // 2. Open Library fallback
+  const olCover=await fetchCoverOpenLibrary(isbn,nombre,autor);
+  if(olCover) return olCover;
+
   return null;
 }
 
@@ -1950,12 +2111,11 @@ async function runCoverQueue(){
   if(coverRunning) return;
   coverRunning=true;
   const prog=document.getElementById('cover-progress');
-  let done=0;
   const total=coverQueue.length;
+  let done=0;
 
   while(coverQueue.length>0){
     const libro=coverQueue.shift();
-    // Skip if cover was set manually while we were waiting
     const current=libros.find(l=>l.id===libro.id);
     if(!current||current.cover){done++;continue;}
 
@@ -1969,7 +2129,6 @@ async function runCoverQueue(){
       prog.style.display='block';
       prog.textContent=`🖼 Buscando portadas… ${done}/${total}`;
     }
-    // Small delay to avoid rate limiting
     await new Promise(r=>setTimeout(r,300));
   }
 
@@ -1978,16 +2137,16 @@ async function runCoverQueue(){
     prog.textContent=`✅ Portadas completadas`;
     setTimeout(()=>{prog.style.display='none';prog.textContent='';},3000);
   }
-  // Refresh table to show newly loaded covers
   if(vistaAct==='cat') rTabla();
 }
 
 function queueCoversForNew(nuevos){
+  // Clear any existing queue first to avoid accumulation
+  coverQueue=[];
   // Only queue books without covers
   const toFetch=nuevos.filter(l=>!l.cover);
   if(!toFetch.length) return;
   coverQueue.push(...toFetch);
-  // Start background processing after a short delay
   setTimeout(runCoverQueue, 1500);
 }
 
@@ -2073,69 +2232,216 @@ async function removeCover(){
   if(vistaAct==='cat') rTabla();
 }
 
-// ── PIN LOCK ──────────────────────────────────────────────────────────────
-const ADMIN_PIN='1234'; // ← Change this to your preferred 4-digit PIN
-let pinBuffer='';
-let adminUnlocked=false;
+function checkRepCode(){
+  const code=document.getElementById('rep-code').value.trim();
+  if(code!=='1518'){
+    document.getElementById('rep-code-err').textContent='Código incorrecto. Intentá de nuevo.';
+    document.getElementById('rep-code').value='';
+    document.getElementById('rep-code').focus();
+    return;
+  }
+  cm('mp-rep');
+  importFile(window._repFile,'replace');
+}
+
+// ── USER MANAGEMENT ───────────────────────────────────────────────────────
+const PERMS_ALL = ['add','cat','pre','his','imp'];
+
+let tempUsers = []; // cached from Supabase
+
+async function loadUsers(){
+  try{
+    const data = await sbGet('usuarios','select=*&order=creado.asc');
+    tempUsers = data.map(r=>({
+      id:r.id, nombre:r.nombre, pin:r.pin,
+      perms:r.perms||[], expiry:r.expiry||null, creado:r.creado||''
+    }));
+    return tempUsers;
+  }catch(e){console.warn('Error loading users:',e);return[];}
+}
+
+async function saveUser(){
+  const nombre=document.getElementById('usr-nombre').value.trim();
+  const pin=document.getElementById('usr-pin').value.trim();
+  if(!nombre){alerta('al-usr','El nombre es obligatorio.','err');return;}
+  if(!pin){alerta('al-usr','El PIN es obligatorio.','err');return;}
+  if(nombre.toLowerCase()==='admin'){alerta('al-usr','"admin" es un nombre reservado.','err');return;}
+  const perms=PERMS_ALL.filter(p=>document.getElementById('perm-'+p).checked);
+  if(!perms.length){alerta('al-usr','Seleccioná al menos un permiso.','err');return;}
+  const expiry=document.getElementById('usr-exp').value||null;
+  const editId=document.getElementById('usr-edit-id').value;
+
+  try{
+    if(editId){
+      await sbUpdate('usuarios',editId,{nombre,pin,perms,expiry});
+    } else {
+      // Check duplicate name
+      const existing=tempUsers.find(u=>u.nombre.toLowerCase()===nombre.toLowerCase());
+      if(existing){alerta('al-usr','Ya existe un usuario con ese nombre.','err');return;}
+      const newUser={id:uid(),nombre,pin,perms,expiry,creado:hoy()};
+      await sbInsert('usuarios',newUser);
+    }
+    await loadUsers();
+    cm('mp-usr');
+    rUsrList();
+  }catch(e){alerta('al-usr','Error: '+e.message,'err');}
+}
+
+async function delUser(id){
+  if(!confirm('¿Eliminar este usuario?'))return;
+  try{
+    await sbDelete('usuarios',id);
+    tempUsers=tempUsers.filter(u=>u.id!==id);
+    rUsrList();
+  }catch(e){alert('Error: '+e.message);}
+}
+
+let currentUser = null;
+let adminUnlocked = false;
 
 function toggleLock(){
-  if(adminUnlocked){
+  if(currentUser){
+    currentUser=null;
     adminUnlocked=false;
-    document.getElementById('admin-tabs').style.display='none';
-    document.getElementById('lock-btn').innerHTML='🔒 Admin';
+    applyPermissions([]);
+    document.getElementById('lock-btn').innerHTML='🔒 Iniciar sesión';
     document.getElementById('lock-btn').style.color='rgba(255,255,255,.6)';
-    // Return to Buscador
+    document.getElementById('session-label').style.display='none';
     document.querySelectorAll('.vista').forEach(v=>v.classList.remove('activa'));
-    document.querySelectorAll('nav button:not(#lock-btn)').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
     document.getElementById('vista-bus').classList.add('activa');
     document.querySelector('nav button').classList.add('active');
   } else {
-    pinBuffer='';
-    updatePinDots();
-    document.getElementById('pin-err').textContent='';
-    document.querySelectorAll('.pd').forEach(d=>{d.classList.remove('filled','error')});
-    document.getElementById('mp-pin').classList.add('abierto');
+    document.getElementById('login-user').value='';
+    document.getElementById('login-pin').value='';
+    document.getElementById('login-err').textContent='';
+    document.getElementById('mp-login').classList.add('abierto');
+    setTimeout(()=>document.getElementById('login-user').focus(),100);
   }
 }
 
-function pinKey(d){
-  if(pinBuffer.length>=4)return;
-  pinBuffer+=d;
-  updatePinDots();
-  if(pinBuffer.length===4)setTimeout(pinSubmit,120);
-}
+async function doLogin(){
+  const username=document.getElementById('login-user').value.trim();
+  const pin=document.getElementById('login-pin').value.trim();
+  const err=document.getElementById('login-err');
 
-function pinDel(){
-  pinBuffer=pinBuffer.slice(0,-1);
-  updatePinDots();
-}
-
-function updatePinDots(){
-  document.querySelectorAll('.pd').forEach((d,i)=>{
-    d.classList.toggle('filled',i<pinBuffer.length);
-    d.classList.remove('error');
-  });
-}
-
-function pinSubmit(){
-  if(pinBuffer===ADMIN_PIN){
+  // Admin check
+  if(username.toLowerCase()==='admin'&&pin===ADMIN_PIN){
+    currentUser='admin';
     adminUnlocked=true;
-    document.getElementById('mp-pin').classList.remove('abierto');
-    document.getElementById('admin-tabs').style.display='contents';
+    applyPermissions(PERMS_ALL,true);
     document.getElementById('lock-btn').innerHTML='🔓 Admin';
     document.getElementById('lock-btn').style.color='var(--gold)';
-    // Auto-navigate to Catálogo after unlock
-    const catBtn=document.querySelectorAll('nav button')[2];
-    sv('cat',catBtn);
-  } else {
-    document.querySelectorAll('.pd').forEach(d=>{d.classList.add('error');d.classList.remove('filled')});
-    document.getElementById('pin-err').textContent='PIN incorrecto. Intentá de nuevo.';
-    pinBuffer='';
-    setTimeout(updatePinDots,900);
+    document.getElementById('session-label').textContent='Admin';
+    document.getElementById('session-label').style.display='inline';
+    cm('mp-login');
+    await loadUsers(); // refresh user cache
+    const catBtn=document.getElementById('nav-cat');
+    if(catBtn) sv('cat',catBtn);
+    return;
+  }
+
+  // Temp user check — use cached list, reload if empty
+  if(!tempUsers.length) await loadUsers();
+  const user=tempUsers.find(u=>u.nombre.toLowerCase()===username.toLowerCase()&&u.pin===pin);
+  if(!user){err.textContent='Usuario o PIN incorrecto.';return;}
+  if(user.expiry&&user.expiry<hoy()){err.textContent='Usuario o PIN incorrecto.';return;}
+
+  currentUser=user;
+  adminUnlocked=false;
+  applyPermissions(user.perms||[]);
+  document.getElementById('lock-btn').innerHTML='🔓 Salir';
+  document.getElementById('lock-btn').style.color='var(--gold)';
+  document.getElementById('session-label').textContent=user.nombre;
+  document.getElementById('session-label').style.display='inline';
+  cm('mp-login');
+
+  const first=user.perms?.[0];
+  if(first){
+    const btn=document.getElementById('nav-'+first);
+    if(btn) sv(first,btn);
   }
 }
 
-// Keyboard support for PIN modal
+function applyPermissions(perms, isAdmin=false){
+  ['add','cat','pre','his','imp'].forEach(t=>{
+    const btn=document.getElementById('nav-'+t);
+    if(btn) btn.style.display=(perms.includes(t)||isAdmin)?'':'none';
+  });
+  const usrBtn=document.getElementById('nav-usr');
+  if(usrBtn) usrBtn.style.display=isAdmin?'':'none';
+}
+
+// ── USER CRUD UI ──────────────────────────────────────────────────────────
+function oNewUser(){
+  document.getElementById('usr-modal-title').textContent='＋ Nuevo usuario';
+  document.getElementById('usr-edit-id').value='';
+  document.getElementById('usr-nombre').value='';
+  document.getElementById('usr-pin').value='';
+  document.getElementById('usr-exp').value='';
+  PERMS_ALL.forEach(p=>document.getElementById('perm-'+p).checked=false);
+  document.getElementById('al-usr').innerHTML='';
+  document.getElementById('mp-usr').classList.add('abierto');
+}
+
+function oeditUser(id){
+  const u=tempUsers.find(x=>x.id===id);if(!u)return;
+  document.getElementById('usr-modal-title').textContent='✏ Editar usuario';
+  document.getElementById('usr-edit-id').value=id;
+  document.getElementById('usr-nombre').value=u.nombre;
+  document.getElementById('usr-pin').value=u.pin;
+  document.getElementById('usr-exp').value=u.expiry||'';
+  PERMS_ALL.forEach(p=>document.getElementById('perm-'+p).checked=(u.perms||[]).includes(p));
+  document.getElementById('al-usr').innerHTML='';
+  document.getElementById('mp-usr').classList.add('abierto');
+}
+
+function setRolePreset(role){
+  const presets={bibliotecario:['add','cat','pre','his'],docente:['add']};
+  const perms=presets[role]||[];
+  PERMS_ALL.forEach(p=>document.getElementById('perm-'+p).checked=perms.includes(p));
+}
+
+function rUsrList(){
+  const el=document.getElementById('usr-list');
+  if(!el)return;
+  const users=tempUsers;
+  if(!users.length){
+    el.innerHTML='<div class="empty">No hay usuarios temporales. Creá uno con el botón de arriba.</div>';
+    return;
+  }
+  const permLabels={add:'Registrar',cat:'Catálogo',pre:'Préstamos',his:'Historial',imp:'Importar'};
+  el.innerHTML=users.map(u=>{
+    const expired=u.expiry&&u.expiry<hoy();
+    return `<div class="pc${expired?' mora':''}" style="margin-bottom:.5rem">
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:.9rem;color:var(--text-primary)">
+          👤 ${esc(u.nombre)}
+          ${expired?'<span style="font-size:.7rem;color:var(--danger);font-weight:700;margin-left:.4rem">⚠ Expirado</span>':''}
+        </div>
+        <div style="font-size:.75rem;color:var(--text-muted);margin-top:.2rem">
+          Permisos: ${(u.perms||[]).map(p=>`<span class="chip" style="margin-right:.2rem">${permLabels[p]||p}</span>`).join('')}
+        </div>
+        ${u.expiry?`<div style="font-size:.73rem;color:var(--text-muted);margin-top:.15rem">Expira: ${fmtF(u.expiry)}</div>`:''}
+        <div style="font-size:.72rem;color:var(--text-muted)">Creado: ${fmtF(u.creado)}</div>
+      </div>
+      <div style="display:flex;gap:.4rem">
+        <button class="btn btn-ghost" style="font-size:.78rem" onclick="oeditUser('${u.id}')">✏ Editar</button>
+        <button class="btn btn-danger" style="font-size:.78rem" onclick="delUser('${u.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── PIN KEYPAD (kept for modal UI only — login now handled by doLogin) ────
+const ADMIN_PIN='1234';
+let pinBuffer='';
+
+function pinKey(d){if(pinBuffer.length>=4)return;pinBuffer+=d;updatePinDots();if(pinBuffer.length===4)setTimeout(pinSubmit,120);}
+function pinDel(){pinBuffer=pinBuffer.slice(0,-1);updatePinDots();}
+function updatePinDots(){document.querySelectorAll('.pd').forEach((d,i)=>{d.classList.toggle('filled',i<pinBuffer.length);d.classList.remove('error');});}
+function pinSubmit(){cm('mp-pin');}
+
 document.addEventListener('keydown',e=>{
   if(!document.getElementById('mp-pin').classList.contains('abierto'))return;
   if(e.key>='0'&&e.key<='9')pinKey(e.key);
@@ -2149,6 +2455,7 @@ document.getElementById('mp-pin').addEventListener('click',e=>e.stopPropagation(
 
 // ── INIT ──────────────────────────────────────────────────────────────────
 buildBusForm();
+initEmailJS();
 loadAll();
 </script>
 </body>
