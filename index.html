@@ -362,8 +362,8 @@ tr:hover td{background:var(--card-alt)}
   background:var(--gold-light);
   padding:.45rem .85rem;
   font-weight:800;text-align:right;
-  white-space:nowrap;
   width:15%;
+  min-width:110px;
   color:#7A5E00;
   font-family:'Nunito',sans-serif;font-size:.8rem;
   letter-spacing:.3px;
@@ -372,8 +372,9 @@ tr:hover td{background:var(--card-alt)}
 .bus-table .inp-cell{
   background:#F7F5F0;
   border-left:1px solid var(--border);
+  width:85%;
 }
-.bus-table input{
+.bus-table input,.bus-table select{
   width:100%;border:none;
   padding:.52rem .85rem;font-size:.88rem;
   outline:none;
@@ -382,6 +383,7 @@ tr:hover td{background:var(--card-alt)}
   font-family:'Nunito Sans',sans-serif;
   display:block;
   box-sizing:border-box;
+  -webkit-appearance:auto;
 }
 .bus-table input::placeholder{color:#C0B8A8}
 .bus-table tr:focus-within .inp-cell{background:#FFFDE8;border-left-color:var(--gold)}
@@ -1727,8 +1729,6 @@ function populateBusDropdowns(){
     sel.value=cur;
   });
 }
-
-buildBusForm();
 
 function buscarLibro(){
   const vals={
