@@ -504,7 +504,6 @@ tr:hover td{background:var(--card-alt)}
   <div class="header-meta">
     <div class="header-date" id="hfecha"></div>
     <div class="header-stats" id="htotal"></div>
-    <div id="cover-progress" style="display:none;font-size:.7rem;color:var(--gold);margin-top:.2rem"></div>
   </div>
 </header>
 
@@ -533,15 +532,26 @@ tr:hover td{background:var(--card-alt)}
     <select id="ff" onchange="buscar()"><option value="">Todos los formatos</option></select>
     <select id="fa" onchange="buscar()"><option value="">Todas las categorías</option></select>
     <select id="fs" onchange="buscar()"><option value="">Todas las salas</option></select>
-    <select id="fe" onchange="buscar()"><option value="">Todos los estados</option><option value="disp">Disponible</option><option value="prest">Prestado</option></select>
+    <select id="fe" onchange="buscar()"><option value="">Todos los estados</option><option value="disp">Disponible</option><option value="prest">Prestado</option><option value="arch">Archivados</option><option value="noarch">Activos (sin archivados)</option></select>
   </div>
   <div id="pt" class="pag"></div>
   <div class="tbl-wrap">
   <table>
-    <thead><tr>
-      <th>NUM</th><th>Portada</th><th>Grado</th><th>Nombre</th><th>Autor</th><th>Categoría</th><th>Vol</th>
-      <th>Formato</th><th>Descripción</th><th>Editorial</th><th>Colección/Serie</th>
-      <th>ISBN</th><th>Observación</th><th>Ubicación</th><th>Sala</th>
+    <thead><tr id="cat-thead">
+      <th onclick="sortBy('num')" style="cursor:pointer">NUM <span id="si-num"></span></th>
+      <th>Portada</th>
+      <th onclick="sortBy('grado')" style="cursor:pointer">Grado <span id="si-grado"></span></th>
+      <th onclick="sortBy('nombre')" style="cursor:pointer">Nombre <span id="si-nombre"></span></th>
+      <th onclick="sortBy('autor')" style="cursor:pointer">Autor <span id="si-autor"></span></th>
+      <th onclick="sortBy('area')" style="cursor:pointer">Categoría <span id="si-area"></span></th>
+      <th onclick="sortBy('vol')" style="cursor:pointer">Vol <span id="si-vol"></span></th>
+      <th>Formato</th>
+      <th>Descripción</th>
+      <th onclick="sortBy('editorial')" style="cursor:pointer">Editorial <span id="si-editorial"></span></th>
+      <th onclick="sortBy('coleccion')" style="cursor:pointer">Colección/Serie <span id="si-coleccion"></span></th>
+      <th>ISBN</th><th>Observación</th>
+      <th onclick="sortBy('ubicacion')" style="cursor:pointer">Ubicación <span id="si-ubicacion"></span></th>
+      <th onclick="sortBy('sala')" style="cursor:pointer">Sala <span id="si-sala"></span></th>
       <th>Estado</th><th>Acciones</th>
     </tr></thead>
     <tbody id="tb"></tbody>
@@ -759,18 +769,31 @@ tr:hover td{background:var(--card-alt)}
 
 <!-- ══ MODAL PORTADA ════════════════════════════════════════════════════ -->
 <div class="modal-overlay" id="mp-cov">
-  <div class="modal" style="max-width:560px">
-    <h2>🖼 Seleccionar portada</h2>
+  <div class="modal" style="max-width:440px">
+    <h2>🖼 Portada del libro</h2>
     <p id="cov-title" style="font-size:.85rem;font-weight:700;color:var(--text-secondary);margin-bottom:1rem"></p>
-    <div id="cov-options" style="display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center;margin-bottom:1rem"></div>
-    <div class="fi" style="margin-bottom:.8rem">
-      <label>O pegar URL de imagen personalizada</label>
-      <div style="display:flex;gap:.5rem">
-        <input id="cov-url" placeholder="https://..." style="flex:1">
-        <button class="btn btn-ghost" onclick="previewCustomCover()">Vista previa</button>
-      </div>
-      <img id="cov-preview" style="display:none;width:80px;margin-top:.5rem;border-radius:var(--radius);border:1px solid var(--border)">
+
+    <!-- Current preview -->
+    <div style="display:flex;justify-content:center;margin-bottom:1rem">
+      <img id="cov-preview" style="display:none;width:100px;height:140px;object-fit:cover;border-radius:var(--radius);border:2px solid var(--gold);box-shadow:0 4px 12px rgba(0,0,0,.1)">
+      <div id="cov-placeholder" style="width:100px;height:140px;background:var(--card-alt);border:2px dashed var(--border);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:2rem">📖</div>
     </div>
+
+    <!-- Upload from device -->
+    <div class="fi" style="margin-bottom:.8rem">
+      <label>📁 Subir imagen desde tu dispositivo</label>
+      <input type="file" id="cov-file" accept="image/*" onchange="onCoverFileChange(this)"
+        style="padding:.45rem;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.83rem;background:#fff">
+    </div>
+
+    <!-- Or paste URL -->
+    <div class="fi" style="margin-bottom:.5rem">
+      <label>🔗 O pegar URL de imagen</label>
+      <div style="display:flex;gap:.5rem">
+        <input id="cov-url" placeholder="https://…" oninput="previewCustomCover()" style="flex:1">
+      </div>
+    </div>
+
     <div class="mf">
       <button class="btn btn-ghost" onclick="cm('mp-cov')">Cancelar</button>
       <button class="btn btn-danger" onclick="removeCover()">🗑 Sin portada</button>
@@ -1046,14 +1069,16 @@ function dbToLibro(r){
     autor:r.autor||'-',area:r.area||'',vol:r.vol||'',formato:r.formato||'Libro',
     desc:r.descripcion||'',editorial:r.editorial||'',coleccion:r.coleccion||'',
     isbn:r.isbn||'',obs:r.obs||'',ubicacion:r.ubicacion||'',sala:r.sala||'',
-    cantidad:r.cantidad||1,disponibles:r.disponibles||1,cover:r.cover||''};
+    cantidad:r.cantidad||1,disponibles:r.disponibles||1,cover:r.cover||'',
+    archivado:r.archivado||false};
 }
 function libroToDb(l){
   return {num:l.num||'',grado:l.grado||'',nombre:l.nombre||'',
     autor:l.autor||'-',area:l.area||'',vol:l.vol||'',formato:l.formato||'Libro',
     descripcion:l.desc||'',editorial:l.editorial||'',coleccion:l.coleccion||'',
     isbn:l.isbn||'',obs:l.obs||'',ubicacion:l.ubicacion||'',sala:l.sala||'',
-    cantidad:l.cantidad||1,disponibles:l.disponibles||1,cover:l.cover||''};
+    cantidad:l.cantidad||1,disponibles:l.disponibles||1,cover:l.cover||'',
+    archivado:l.archivado||false};
 }
 function dbToPrestamo(r){
   return {uid:r.uid,loanUid:r.loan_uid||'',libroId:r.libro_id,
@@ -1089,7 +1114,8 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 function upHdr(){
   const act=prestamos.filter(p=>p.estado==='activo').length;
   const pend=prestamos.filter(p=>p.estado==='pendiente').length;
-  document.getElementById('htotal').textContent=`${libros.length} títulos · ${act} préstamos activos${pend?` · ${pend} solicitudes`:``}`;
+  const total=libros.filter(l=>!l.archivado).length;
+  document.getElementById('htotal').textContent=`${total} títulos · ${act} préstamos activos${pend?` · ${pend} solicitudes`:''}`;
 }
 
 function showLoader(msg='Cargando…'){
@@ -1156,7 +1182,18 @@ function setupRealtime(){
   },120000);
 }
 
-function sv(id,btn){
+let sortCol='', sortDir=1;
+
+function sortBy(col){
+  if(sortCol===col) sortDir*=-1;
+  else{sortCol=col;sortDir=1;}
+  rTabla();
+}
+
+function sortIcon(col){
+  if(sortCol!==col) return '<span style="opacity:.3;font-size:.65rem">⇅</span>';
+  return sortDir===1?'<span style="font-size:.65rem">▲</span>':'<span style="font-size:.65rem">▼</span>';
+}
   document.querySelectorAll('.vista').forEach(v=>v.classList.remove('activa'));
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
   document.getElementById('vista-'+id).classList.add('activa');
@@ -1200,8 +1237,10 @@ function buscar(){
     if(fm&&l.formato!==fm)return false;
     if(ar&&l.area!==ar)return false;
     if(sl&&l.sala!==sl)return false;
-    if(es==='disp'&&l.disponibles===0)return false;
+    if(es==='disp'&&(l.disponibles===0||l.archivado))return false;
     if(es==='prest'&&l.disponibles===l.cantidad)return false;
+    if(es==='arch'&&!l.archivado)return false;
+    if(es==='noarch'&&l.archivado)return false;
     return true;
   });
   pg=1;rTabla();
@@ -1211,18 +1250,29 @@ function rTabla(){
   const tb=document.getElementById('tb'),nr=document.getElementById('nr');
   if(!fil.length){tb.innerHTML='';nr.style.display='block';document.getElementById('pt').innerHTML='';document.getElementById('pb').innerHTML='';return}
   nr.style.display='none';
-  const tot=Math.ceil(fil.length/PG),sl=fil.slice((pg-1)*PG,pg*PG);
+  // Update sort icons
+  ['num','grado','nombre','autor','area','vol','editorial','coleccion','ubicacion','sala'].forEach(c=>{
+    const el=document.getElementById('si-'+c);if(el)el.innerHTML=sortIcon(c);
+  });
+  // Apply sort
+  let sorted=[...fil];
+  if(sortCol){
+    sorted.sort((a,b)=>String(a[sortCol]||'').toLowerCase().localeCompare(String(b[sortCol]||'').toLowerCase(),'es')*sortDir);
+  }
+  const tot=Math.ceil(sorted.length/PG),sl=sorted.slice((pg-1)*PG,pg*PG);
   tb.innerHTML=sl.map(l=>{
-    const d=l.disponibles===0?'agot':l.disponibles<l.cantidad?'prest':'disp';
-    const dt=l.disponibles===0?'Agotado':l.disponibles<l.cantidad?`${l.disponibles}/${l.cantidad} disp.`:'Disponible';
+    const arch=l.archivado;
+    const d=arch?'agot':l.disponibles===0?'agot':l.disponibles<l.cantidad?'prest':'disp';
+    const dt=arch?'Archivado':l.disponibles===0?'Agotado':l.disponibles<l.cantidad?`${l.disponibles}/${l.cantidad} disp.`:'Disponible';
+    const rowStyle=arch?'opacity:.45;':'';
     const thumb=l.cover
-      ? `<img src="${esc(l.cover)}" style="width:32px;height:44px;object-fit:cover;border-radius:3px;border:1px solid var(--border);cursor:pointer" onclick="oCover(${l.id})" title="Ver/cambiar portada">`
-      : `<button onclick="oCover(${l.id})" style="font-size:.65rem;padding:.2rem .4rem;background:var(--card-alt);border:1px dashed var(--border);border-radius:4px;cursor:pointer;color:var(--text-muted);white-space:nowrap" title="Buscar portada">🖼</button>`;
-    return `<tr>
+      ? `<img src="${esc(l.cover)}" style="width:32px;height:44px;object-fit:cover;border-radius:3px;border:1px solid var(--border);cursor:pointer${arch?';filter:grayscale(1)':''}" onclick="oCover(${l.id})">`
+      : `<button onclick="oCover(${l.id})" style="font-size:.65rem;padding:.2rem .4rem;background:var(--card-alt);border:1px dashed var(--border);border-radius:4px;cursor:pointer;color:var(--text-muted)">🖼</button>`;
+    return `<tr style="${rowStyle}">
       <td style="color:var(--text-muted);font-size:.74rem">${esc(l.num)}</td>
       <td>${thumb}</td>
       <td>${l.grado?`<span class="chip chip-g">${esc(l.grado)}</span>`:''}</td>
-      <td style="font-weight:700;white-space:normal;max-width:170px;color:var(--text-primary)">${esc(l.nombre)}</td>
+      <td style="font-weight:700;white-space:normal;max-width:170px;color:${arch?'var(--text-muted)':'var(--text-primary)'}">${esc(l.nombre)}</td>
       <td style="white-space:normal;max-width:130px">${esc(l.autor||'−')}</td>
       <td>${esc(l.area||'−')}</td>
       <td>${esc(l.vol||'−')}</td>
@@ -1236,8 +1286,9 @@ function rTabla(){
       <td style="font-size:.75rem">${esc(l.sala||'−')}</td>
       <td><span class="badge bd-${d}">${dt}</span></td>
       <td><div style="display:flex;gap:.3rem;flex-wrap:wrap">
-        <button class="btn btn-primary" style="padding:.25rem .6rem;font-size:.72rem" onclick="opre(${l.id})" ${l.disponibles===0?'disabled':''}>Prestar</button>
+        ${!arch?`<button class="btn btn-primary" style="padding:.25rem .6rem;font-size:.72rem" onclick="opre(${l.id})" ${l.disponibles===0?'disabled':''}>Prestar</button>`:''}
         <button class="btn btn-ghost" style="padding:.25rem .6rem;font-size:.72rem" onclick="oedit(${l.id})">Editar</button>
+        <button class="btn btn-ghost" style="padding:.25rem .6rem;font-size:.72rem;color:${arch?'var(--success)':'var(--text-muted)'}" onclick="toggleArchivar(${l.id})">${arch?'↩ Activar':'📦 Archivar'}</button>
         <button class="btn btn-danger" style="padding:.25rem .55rem;font-size:.72rem" onclick="del(${l.id})">✕</button>
       </div></td>
     </tr>`;
@@ -1261,17 +1312,20 @@ function rPag(tot){
 function chPg(n){if(n<1||n>Math.ceil(fil.length/PG))return;pg=n;rTabla();document.getElementById('vista-cat').scrollIntoView({behavior:'smooth',block:'start'})}
 
 function rStats(){
-  const t=libros.length,ej=libros.reduce((a,l)=>a+l.cantidad,0),pa=prestamos.length,di=libros.reduce((a,l)=>a+l.disponibles,0);
+  const t=libros.filter(l=>!l.archivado).length;
+  const activos=prestamos.filter(p=>p.estado==='activo').length;
+  const pendientes=prestamos.filter(p=>p.estado==='pendiente').length;
+  const di=libros.reduce((a,l)=>a+(l.archivado?0:l.disponibles),0);
   document.getElementById('sc').innerHTML=`
     <div class="sc verde"><div class="l">Títulos</div><div class="v">${t.toLocaleString()}</div></div>
-    <div class="sc azul"><div class="l">Ejemplares</div><div class="v">${ej.toLocaleString()}</div></div>
-    <div class="sc ambar"><div class="l">Préstamos activos</div><div class="v">${pa}</div></div>
+    <div class="sc ambar"><div class="l">Préstamos activos</div><div class="v">${activos}</div></div>
+    <div class="sc azul"><div class="l">Solicitudes</div><div class="v">${pendientes}</div></div>
     <div class="sc verde"><div class="l">Disponibles</div><div class="v">${di.toLocaleString()}</div></div>`;
 }
 
 // ── SOLICITUD (student → pending) ────────────────────────────────────────
 function opre(id){
-  const l=libros.find(x=>x.id===id);if(!l||l.disponibles===0)return;
+  const l=libros.find(x=>x.id===id);if(!l||l.disponibles===0||l.archivado)return;
   document.getElementById('mp-id').value=id;
   document.getElementById('mp-t').textContent=`📖 ${l.nombre}${l.autor&&l.autor!=='-'?' — '+l.autor:''}`;
   ['mp-l','mp-c'].forEach(x=>document.getElementById(x).value='');
@@ -1507,7 +1561,6 @@ async function addLibro(){
     libros.push(dbToLibro(res[0]));
     alerta('al-ag',`✓ "${nombre}" guardado.`,'ok');
     clrAdd();upHdr();rCat();
-    queueCoversForNew([libros[libros.length-1]]);
   }catch(e){alerta('al-ag','Error: '+e.message,'err');}
 }
 
@@ -1681,7 +1734,6 @@ function importFile(file,mode){
       setLog(`✅ <strong>${nuevos.length} libros importados</strong> desde "${file.name}".<br>Base de datos: <strong>${libros.length} títulos</strong>.<br><small>Columnas → Nombre: <em>${cNombre}</em> · Categoría: <em>${cArea||'—'}</em> · Autor: <em>${cAutor||'—'}</em></small>`,'ok');
       upHdr();
       populateBusDropdowns();
-      queueCoversForNew(libros.filter(l=>!l.cover));
     }catch(err){
       setLog(`❌ Error: ${err.message}`,'err');
     }
@@ -1765,10 +1817,11 @@ function buscarLibro(){
   }
   el.innerHTML=`<div style="font-size:.8rem;color:var(--text-muted);margin-bottom:.6rem;text-align:center;font-weight:700">${res.length} resultado(s) encontrado(s)</div>`+
   res.map(l=>{
-    const disp=l.disponibles>0;
-    return `<div class="bus-result-card${disp?'':' no-disp'}">
+    const disp=l.disponibles>0&&!l.archivado;
+    const arch=l.archivado;
+    return `<div class="bus-result-card${disp?'':' no-disp'}" style="${arch?'opacity:.5;':''}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.8rem;flex-wrap:wrap">
-        ${l.cover?`<img src="${esc(l.cover)}" style="width:52px;height:72px;object-fit:cover;border-radius:4px;border:1px solid var(--border);flex-shrink:0" onerror="this.style.display='none'">`:'<div style="width:52px;height:72px;background:var(--card-alt);border:1px dashed var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">📖</div>'}
+        ${l.cover?`<img src="${esc(l.cover)}" style="width:52px;height:72px;object-fit:cover;border-radius:4px;border:1px solid var(--border);flex-shrink:0${arch?';filter:grayscale(1)':''}" onerror="this.style.display='none'">`:'<div style="width:52px;height:72px;background:var(--card-alt);border:1px dashed var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">📖</div>'}
         <div style="flex:1;min-width:160px">
           <div style="font-weight:800;font-size:.95rem;color:var(--text-primary);font-family:'Nunito',sans-serif">${esc(l.nombre)}</div>
           ${l.autor&&l.autor!=='-'?`<div style="font-size:.8rem;color:var(--text-muted);margin-top:.15rem">Autor: ${esc(l.autor)}</div>`:''}
@@ -1786,8 +1839,8 @@ function buscarLibro(){
           </div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.4rem">
-          <span class="badge ${disp?'bd-disp':'bd-agot'}">${disp?`Disponible (${l.disponibles})`:'Agotado'}</span>
-          ${disp?`<button class="btn btn-primary" style="font-size:.76rem;padding:.3rem .75rem" onclick="opre(${l.id})">📤 Solicitar</button>`:`<span style="font-size:.74rem;color:var(--danger);font-weight:700">No disponible</span>`}
+          <span class="badge ${arch?'bd-agot':disp?'bd-disp':'bd-agot'}">${arch?'Archivado':disp?`Disponible (${l.disponibles})`:'Agotado'}</span>
+          ${disp?`<button class="btn btn-primary" style="font-size:.76rem;padding:.3rem .75rem" onclick="opre(${l.id})">📤 Solicitar</button>`:`<span style="font-size:.74rem;color:var(--danger);font-weight:700">${arch?'No disponible':'No disponible'}</span>`}
         </div>
       </div>
     </div>`;
@@ -2050,33 +2103,8 @@ function reimprimirComprobante(loanUid){
 }
 
 // ── COVER SYSTEM ─────────────────────────────────────────────────────────
-let coverQueue=[];
-let coverRunning=false;
 let coverCoverId=null; // book id currently being picked
 
-async function fetchCoverOpenLibrary(isbn, title, autor){
-  // Try ISBN first
-  if(isbn&&isbn!=='-'&&isbn.trim()){
-    try{
-      const url=`https://covers.openlibrary.org/b/isbn/${isbn.trim()}-L.jpg?default=false`;
-      const res=await fetch(url,{method:'HEAD'});
-      if(res.ok&&res.headers.get('content-type')?.includes('image')){
-        return `https://covers.openlibrary.org/b/isbn/${isbn.trim()}-L.jpg`;
-      }
-    }catch(e){}
-  }
-  // Try title search
-  try{
-    const q=encodeURIComponent(`${title} ${autor&&autor!=='-'?autor:''}`.trim());
-    const url=`https://openlibrary.org/search.json?q=${q}&limit=1&fields=cover_i`;
-    const res=await fetch(url);
-    if(!res.ok) return null;
-    const data=await res.json();
-    const coverId=data?.docs?.[0]?.cover_i;
-    if(coverId) return `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`;
-  }catch(e){}
-  return null;
-}
 
 async function fetchCover(libro){
   const {isbn,nombre,autor} = libro;
@@ -2151,87 +2179,77 @@ function queueCoversForNew(nuevos){
   setTimeout(runCoverQueue, 1500);
 }
 
-// ── MANUAL COVER PICKER ───────────────────────────────────────────────────
-async function oCover(id){
+
+async function toggleArchivar(id){
+  const l=libros.find(x=>x.id===id);if(!l)return;
+  if(!l.archivado&&prestamos.some(p=>p.libroId===id&&p.estado==='activo')){
+    alert('Este libro tiene préstamos activos. Registrá la devolución antes de archivarlo.');return;
+  }
+  l.archivado=!l.archivado;
+  try{
+    await sbUpdate('libros',id,{archivado:l.archivado});
+    rTabla();
+  }catch(e){l.archivado=!l.archivado;alert('Error: '+e.message);}
+}
+
+// ── COVER (manual upload only) ────────────────────────────────────────────
+let coverCoverId=null;
+
+function oCover(id){
   const l=libros.find(x=>x.id===id);if(!l)return;
   coverCoverId=id;
   document.getElementById('cov-title').textContent=`📖 ${l.nombre}${l.autor&&l.autor!=='-'?' — '+l.autor:''}`;
-  document.getElementById('cov-options').innerHTML=`<div style="color:var(--text-muted);font-size:.83rem;padding:1rem">🔍 Buscando portadas…</div>`;
   document.getElementById('cov-url').value=l.cover||'';
+  document.getElementById('cov-file').value='';
   const prev=document.getElementById('cov-preview');
-  if(l.cover){prev.src=l.cover;prev.style.display='block';}
-  else prev.style.display='none';
+  const ph=document.getElementById('cov-placeholder');
+  if(l.cover){prev.src=l.cover;prev.style.display='block';if(ph)ph.style.display='none';}
+  else{prev.src='';prev.style.display='none';if(ph)ph.style.display='flex';}
   document.getElementById('mp-cov').classList.add('abierto');
-
-  // Fetch up to 4 results
-  const queries=[];
-  if(l.isbn&&l.isbn!=='-') queries.push(`isbn:${l.isbn.trim()}`);
-  queries.push(`${l.nombre} ${l.autor&&l.autor!=='-'?l.autor:''}`.trim());
-  if(l.editorial&&l.editorial!=='-') queries.push(`${l.nombre} ${l.editorial}`.trim());
-
-  const covers=new Map();
-  for(const q of queries){
-    try{
-      const url=`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=4&fields=items(id,volumeInfo/title,volumeInfo/imageLinks)`;
-      const res=await fetch(url);
-      if(!res.ok) continue;
-      const data=await res.json();
-      (data?.items||[]).forEach(item=>{
-        const img=item.volumeInfo?.imageLinks;
-        if(!img) return;
-        const src=(img.extraLarge||img.large||img.medium||img.thumbnail||'')
-          .replace('http://','https://').replace('&edge=curl','');
-        if(src&&!covers.has(src)) covers.set(src,item.volumeInfo?.title||'');
-      });
-    }catch(e){}
-  }
-
-  const opts=document.getElementById('cov-options');
-  if(covers.size===0){
-    opts.innerHTML=`<div style="color:var(--text-muted);font-size:.83rem;padding:1rem;text-align:center">No se encontraron portadas automáticamente.<br>Podés pegar una URL personalizada abajo.</div>`;
-    return;
-  }
-  opts.innerHTML=[...covers.entries()].map(([src,title])=>`
-    <div onclick="selectCoverOption(this,'${src.replace(/'/g,"\\'")}')"
-      style="cursor:pointer;border:2px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:.15s;flex-shrink:0"
-      title="${esc(title)}">
-      <img src="${esc(src)}" style="width:80px;height:110px;object-fit:cover;display:block"
-        onerror="this.parentElement.style.display='none'">
-    </div>`).join('');
 }
 
-function selectCoverOption(el,src){
-  document.querySelectorAll('#cov-options div').forEach(d=>d.style.borderColor='var(--border)');
-  el.style.borderColor='var(--gold)';
-  document.getElementById('cov-url').value=src;
-  const prev=document.getElementById('cov-preview');
-  prev.src=src;prev.style.display='block';
+function onCoverFileChange(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const src=e.target.result;
+    document.getElementById('cov-url').value=src;
+    const prev=document.getElementById('cov-preview');
+    const ph=document.getElementById('cov-placeholder');
+    prev.src=src;prev.style.display='block';
+    if(ph)ph.style.display='none';
+  };
+  reader.readAsDataURL(file);
 }
 
 function previewCustomCover(){
   const src=document.getElementById('cov-url').value.trim();
-  if(!src) return;
+  if(!src)return;
   const prev=document.getElementById('cov-preview');
+  const ph=document.getElementById('cov-placeholder');
   prev.src=src;prev.style.display='block';
+  if(ph)ph.style.display='none';
 }
 
 async function saveCover(){
   const id=coverCoverId;
   const src=document.getElementById('cov-url').value.trim();
-  const l=libros.find(x=>x.id===id);if(!l) return;
+  const l=libros.find(x=>x.id===id);if(!l)return;
   l.cover=src||'';
   await sbUpdate('libros',id,{cover:l.cover}).catch(()=>{});
   cm('mp-cov');
-  if(vistaAct==='cat') rTabla();
+  if(vistaAct==='cat')rTabla();
 }
 
 async function removeCover(){
-  const l=libros.find(x=>x.id===coverCoverId);if(!l) return;
+  const l=libros.find(x=>x.id===coverCoverId);if(!l)return;
   l.cover='';
   await sbUpdate('libros',l.id,{cover:''}).catch(()=>{});
   cm('mp-cov');
-  if(vistaAct==='cat') rTabla();
+  if(vistaAct==='cat')rTabla();
 }
+
+
 
 function checkRepCode(){
   const code=document.getElementById('rep-code').value.trim();
