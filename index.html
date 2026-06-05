@@ -77,6 +77,8 @@ header{
   justify-content:space-between;
   gap:1rem;
   flex-wrap:wrap;
+  position:relative;
+  z-index:50;
 }
 .logo-area{display:flex;align-items:center;gap:.9rem}
 .logo-svg{width:52px;height:52px;flex-shrink:0}
@@ -96,6 +98,8 @@ nav{
   gap:2px;
   padding:.3rem .6rem;
   border-bottom:1px solid rgba(0,0,0,.15);
+  position:relative;
+  z-index:50;
 }
 nav::-webkit-scrollbar{height:3px}
 nav::-webkit-scrollbar-thumb{background:var(--gold)}
@@ -196,7 +200,7 @@ th{
   font-size:.68rem;text-transform:uppercase;
   letter-spacing:.8px;border-bottom:2px solid var(--gold);
   white-space:nowrap;font-family:'Nunito',sans-serif;
-  position:sticky;top:0;z-index:10;background:var(--brown-header);
+  position:sticky;top:0;z-index:5;background:var(--brown-header);
 }
 td{
   padding:.6rem .85rem;
