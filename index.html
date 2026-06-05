@@ -1279,7 +1279,13 @@ function rTabla(){
   // Apply sort
   let sorted=[...fil];
   if(sortCol){
-    sorted.sort((a,b)=>String(a[sortCol]||'').toLowerCase().localeCompare(String(b[sortCol]||'').toLowerCase(),'es')*sortDir);
+    sorted.sort((a,b)=>{
+      if(sortCol==='num'){
+        const an=parseFloat(a.num)||0, bn=parseFloat(b.num)||0;
+        return (an-bn)*sortDir;
+      }
+      return String(a[sortCol]||'').toLowerCase().localeCompare(String(b[sortCol]||'').toLowerCase(),'es')*sortDir;
+    });
   }
   const tot=Math.ceil(sorted.length/PG),sl=sorted.slice((pg-1)*PG,pg*PG);
   tb.innerHTML=sl.map(l=>{
