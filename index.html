@@ -1420,6 +1420,8 @@ async function confPrest(){
       sbUpdate('prestamos',p._dbId,{lector,contacto:p.contacto,fecha_prestamo:p.fechaPrestamo,fecha_devolucion:fecha,aprobado_por:adminNombre,estado:'activo'})
     ]);
     cm('mp-apr');rPre();rCat();upHdr();
+  document.getElementById('bus-res').innerHTML='';
+  buscarLibro();
   }catch(e){alerta('al-apr','Error: '+e.message,'err');}
 }
 
@@ -1431,6 +1433,7 @@ async function rechSolicitud(){
     await sbDelete('prestamos',p._dbId);
     prestamos=prestamos.filter(x=>x.uid!==uid2);
     cm('mp-apr');rPre();upHdr();
+    document.getElementById('bus-res').innerHTML='';
   }catch(e){alert('Error: '+e.message);}
 }
 
