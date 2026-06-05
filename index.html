@@ -1208,6 +1208,7 @@ function sortIcon(col){
 }
 
 function sv(id,btn){
+  document.querySelectorAll('.vista').forEach(v=>v.classList.remove('activa'));
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
   document.getElementById('vista-'+id).classList.add('activa');
   if(btn) btn.classList.add('active');
