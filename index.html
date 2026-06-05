@@ -378,7 +378,7 @@ tr:hover td{background:var(--card-alt)}
 .bus-table{width:100%;border-collapse:collapse;font-size:.88rem;table-layout:fixed}
 .bus-table td{border:1px solid var(--border);padding:0;vertical-align:middle}
 .bus-table .lbl{
-  background:var(--gold-light);
+  background:#FEF5CC;
   padding:.45rem .85rem;
   font-weight:800;text-align:right;
   width:15%;
@@ -390,7 +390,7 @@ tr:hover td{background:var(--card-alt)}
 }
 .bus-table .inp-cell{
   background:#F7F5F0;
-  border-left:1px solid var(--border);
+  border-left:1px solid #DDD5C8;
   width:85%;
 }
 .bus-table input,.bus-table select{
@@ -405,8 +405,7 @@ tr:hover td{background:var(--card-alt)}
   -webkit-appearance:auto;
 }
 .bus-table input::placeholder{color:#C0B8A8}
-.bus-table tr:focus-within .inp-cell{background:#FFFDE8;border-left-color:var(--gold)}
-.bus-table tr:focus-within .lbl{background:#FEF0A0}
+.bus-table tr:focus-within .inp-cell{background:#FFFDE8;border-left-color:#F5C200}
 .bus-btns{display:flex;justify-content:center;gap:1rem;margin-top:1.3rem}
 .bus-btns button{
   background:var(--gold);color:var(--text-on-gold);
@@ -645,11 +644,7 @@ tr:hover td{background:var(--card-alt)}
   <div style="max-width:560px;margin:0 auto">
     <div class="buscador-box">
       <h2>🔍 Buscador de <span>Libros</span></h2>
-      <div style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:.2rem">
-        <table class="bus-table">
-          <tbody id="bus-form"></tbody>
-        </table>
-      </div>
+      <div style="border:1px solid #DDD5C8;border-radius:var(--radius);overflow:hidden;margin-bottom:.2rem" id="bus-form-container"></div>
       <div class="bus-btns">
         <button class="ghost" onclick="busLimpiar()">Limpiar</button>
         <button onclick="buscarLibro()">Buscar libro</button>
@@ -1167,6 +1162,8 @@ async function loadAll(){
   }catch(e){
     document.getElementById('htotal').textContent='⚠ Error de conexión — '+e.message;
     console.error(e);
+    // Still render the empty catalog so the UI works
+    rCat();
   }
 }
 
@@ -1293,7 +1290,7 @@ function rTabla(){
     const isPdfCover=l.cover&&(l.cover.startsWith('data:application/pdf')||l.cover.toLowerCase().includes('.pdf'));
     const thumb=l.cover
       ? isPdfCover
-        ? `<div onclick="window.open('${esc(l.cover)}','_blank')" style="width:32px;height:44px;background:var(--danger-bg);border:1px solid var(--danger);border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem" title="Ver PDF">📄</div>`
+        ? `<div onclick="openPdfSrc('${esc(l.cover)}')" style="width:32px;height:44px;background:var(--danger-bg);border:1px solid var(--danger);border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem" title="Ver PDF">📄</div>`
         : `<img src="${esc(l.cover)}" style="width:32px;height:44px;object-fit:cover;border-radius:3px;border:1px solid var(--border);cursor:pointer${arch?';filter:grayscale(1)':''}" onclick="oCover(${l.id})">`
       : `<button onclick="oCover(${l.id})" style="font-size:.65rem;padding:.2rem .4rem;background:var(--card-alt);border:1px dashed var(--border);border-radius:4px;cursor:pointer;color:var(--text-muted)">🖼</button>`;
     return `<tr style="${rowStyle}">
@@ -1809,17 +1806,24 @@ function buildBusForm(){
     ['b-desc','Descripción','text'],['b-ed','Editorial','select'],['b-col','Colección','select'],
     ['b-obs','Observación','text']
   ];
-  document.getElementById('bus-form').innerHTML=campos.map(([id,lbl,type])=>{
-    const cell = type==='select'
-      ? `<select id="${id}" onchange="buscarLibro()" style="width:100%;border:none;padding:.52rem .85rem;font-size:.88rem;outline:none;background:transparent;color:var(--text-primary);font-family:'Nunito Sans',sans-serif;cursor:pointer;appearance:auto">
-           <option value="">— Todas —</option>
-         </select>`
-      : `<input id="${id}" oninput="buscarLibro()" placeholder="" style="width:100%;border:none;padding:.52rem .85rem;font-size:.88rem;outline:none;background:transparent;color:var(--text-primary);font-family:'Nunito Sans',sans-serif;display:block;box-sizing:border-box">`;
-    return `<tr>
-      <td class="lbl">${lbl}</td>
-      <td class="inp-cell">${cell}</td>
-    </tr>`;
+  const ROW='display:flex;border-bottom:1px solid #E8E0D5';
+  const LBL='background:#FEF5CC;color:#7A5E00;font-weight:800;font-family:Nunito,sans-serif;font-size:.85rem;padding:.6rem 1rem;text-align:right;width:160px;min-width:160px;display:flex;align-items:center;justify-content:flex-end;flex-shrink:0;border-right:1px solid #E8E0D5';
+  const INP='background:#F7F5F0;flex:1;display:flex;align-items:stretch;position:relative;overflow:hidden';
+  const INPUT_STYLE='width:100%;border:none;padding:.6rem 1rem;font-size:.88rem;outline:none;background:transparent;color:#1A1208;font-family:"Nunito Sans",sans-serif;box-sizing:border-box';
+  const SELECT_STYLE=INPUT_STYLE+';-webkit-appearance:none;-moz-appearance:none;appearance:none;cursor:pointer';
+
+  const container=document.getElementById('bus-form-container');
+  const rows=campos.map(([id,lbl,type],i)=>{
+    const isLast=i===campos.length-1;
+    const rowStyle=ROW+(isLast?';border-bottom:none':'');
+    const focusIn=`this.closest('[data-row]').querySelector('[data-lbl]').style.background='#FEF0A0';this.closest('[data-row]').querySelector('[data-inp]').style.background='#FFFDE8'`;
+    const focusOut=`this.closest('[data-row]').querySelector('[data-lbl]').style.background='#FEF5CC';this.closest('[data-row]').querySelector('[data-inp]').style.background='#F7F5F0'`;
+    const cell=type==='select'
+      ? `<div style="flex:1;overflow:hidden;display:flex"><select id="${id}" onchange="buscarLibro()" onfocus="${focusIn}" onblur="${focusOut}" style="${SELECT_STYLE};width:calc(100% + 24px)"><option value="">— Todas —</option></select></div>`
+      : `<input id="${id}" oninput="buscarLibro()" onfocus="${focusIn}" onblur="${focusOut}" style="${INPUT_STYLE}">`;
+    return `<div data-row style="${rowStyle}"><div data-lbl style="${LBL}">${lbl}</div><div data-inp style="${INP}">${cell}</div></div>`;
   }).join('');
+  container.innerHTML=rows;
 }
 
 function populateBusDropdowns(){
@@ -1880,7 +1884,7 @@ function buscarLibro(){
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.8rem;flex-wrap:wrap">
         ${l.cover
           ? l.cover.startsWith('data:application/pdf')||l.cover.toLowerCase().includes('.pdf')
-            ? `<div onclick="window.open('${esc(l.cover)}','_blank')" style="width:52px;height:72px;background:var(--danger-bg);border:2px solid var(--danger);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.2rem;cursor:pointer;flex-shrink:0"><span style="font-size:1.5rem">📄</span><span style="font-size:.6rem;color:var(--danger);font-weight:700">PDF</span></div>`
+            ? `<div onclick="openPdfSrc('${esc(l.cover)}')" style="width:52px;height:72px;background:var(--danger-bg);border:2px solid var(--danger);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.2rem;cursor:pointer;flex-shrink:0"><span style="font-size:1.5rem">📄</span><span style="font-size:.6rem;color:var(--danger);font-weight:700">PDF</span></div>`
             : `<img src="${esc(l.cover)}" style="width:52px;height:72px;object-fit:cover;border-radius:4px;border:1px solid var(--border);flex-shrink:0${arch?';filter:grayscale(1)':''}" onerror="this.style.display='none'">`
           : `<div style="width:52px;height:72px;background:var(--card-alt);border:1px dashed var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">📖</div>`}
         <div style="flex:1;min-width:160px">
@@ -2217,9 +2221,25 @@ function showCoverPreview(src){
   }
 }
 
+function openPdfSrc(src){
+  if(!src) return;
+  if(src.startsWith('data:')){
+    const arr=src.split(',');
+    const mime=arr[0].match(/:(.*?);/)[1];
+    const bstr=atob(arr[1]);
+    let n=bstr.length;
+    const u8arr=new Uint8Array(n);
+    while(n--) u8arr[n]=bstr.charCodeAt(n);
+    const blob=new Blob([u8arr],{type:mime});
+    window.open(URL.createObjectURL(blob),'_blank');
+  } else {
+    window.open(src,'_blank');
+  }
+}
+
 function openCoverPdf(){
   const src=document.getElementById('cov-pdf-preview')._pdfSrc;
-  if(src) window.open(src,'_blank');
+  if(src) openPdfSrc(src);
 }
 
 function onCoverFileChange(input){
@@ -2483,7 +2503,7 @@ document.getElementById('mp-pin').addEventListener('click',e=>e.stopPropagation(
 // ── INIT ──────────────────────────────────────────────────────────────────
 buildBusForm();
 initEmailJS();
-loadAll();
+loadAll().catch(e=>console.warn('Load error:',e));
 </script>
 </body>
 </html>
