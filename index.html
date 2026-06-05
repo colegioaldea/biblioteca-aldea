@@ -225,8 +225,15 @@ tr:hover td{background:var(--card-alt)}
   padding:2rem 1rem;overflow-y:auto;
   backdrop-filter:blur(3px);
   pointer-events:none;
+  height:0;width:0;overflow:hidden;
 }
-.modal-overlay.abierto{display:flex;pointer-events:all;align-items:flex-start;}
+.modal-overlay.abierto{
+  display:flex;
+  pointer-events:all;
+  align-items:flex-start;
+  height:100%;width:100%;
+  overflow-y:auto;
+}
 .modal{
   background:var(--card-bg);
   border:1px solid var(--border);
@@ -1869,8 +1876,17 @@ function busLimpiar(){
   document.getElementById('bus-res').innerHTML='';
 }
 
-function cm(id){document.getElementById(id).classList.remove('abierto')}
-document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m&&id!=='mp-pin')m.classList.remove('abierto')}));
+function cm(id){
+  const el=document.getElementById(id);
+  if(el){el.classList.remove('abierto');}
+}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{
+  if(e.target===m&&m.id!=='mp-pin') m.classList.remove('abierto');
+}));
+// Ensure no hidden modal ever blocks the nav
+document.querySelector('nav').addEventListener('click',()=>{
+  document.querySelectorAll('.modal-overlay:not(.abierto)').forEach(m=>m.classList.remove('abierto'));
+},true);
 function alerta(cid,msg,tipo){
   const el=document.getElementById(cid);
   el.innerHTML=`<div class="alerta al-${tipo}">${msg}</div>`;
