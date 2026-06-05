@@ -1087,7 +1087,7 @@ function dbToLibro(r){
     autor:r.autor||'-',area:r.area||'',vol:r.vol||'',formato:r.formato||'Libro',
     desc:r.descripcion||'',editorial:r.editorial||'',coleccion:r.coleccion||'',
     isbn:r.isbn||'',obs:r.obs||'',ubicacion:r.ubicacion||'',sala:r.sala||'',
-    cantidad:r.cantidad||1,disponibles:r.disponibles||1,cover:r.cover||'',
+    cantidad:r.cantidad||1,disponibles:r.disponibles!=null?r.disponibles:1,cover:r.cover||'',
     archivado:r.archivado||false};
 }
 function libroToDb(l){
