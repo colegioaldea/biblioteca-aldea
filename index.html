@@ -200,7 +200,7 @@ th{
   font-size:.68rem;text-transform:uppercase;
   letter-spacing:.8px;border-bottom:2px solid var(--gold);
   white-space:nowrap;font-family:'Nunito',sans-serif;
-  position:sticky;top:120px;z-index:5;background:var(--brown-header);
+  position:sticky;top:0;z-index:5;background:var(--brown-header);
 }
 td{
   padding:.6rem .85rem;
@@ -681,6 +681,12 @@ tr:hover td{background:var(--card-alt)}
         <input type="file" id="fi-rep" accept=".xlsx,.xls" style="display:none" onchange="prepImport(this.files[0],'replace')">
       </div>
       <p style="font-size:.76rem;color:var(--text-muted);margin-top:.4rem">⚠ "Reemplazar" borra todos los datos actuales y carga el Excel desde cero.</p>
+
+      <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
+        <button class="btn btn-info" onclick="recalcularDisponibles()">🔄 Recalcular disponibles</button>
+        <p style="font-size:.76rem;color:var(--text-muted);margin-top:.3rem">Sincroniza el contador de disponibles de cada libro con los préstamos activos reales.</p>
+        <div id="recalc-log" style="margin-top:.5rem;font-size:.82rem;color:var(--text-muted)"></div>
+      </div>
 
       <!-- Status log — always visible -->
       <div id="imp-log" style="margin-top:1rem;padding:.85rem 1rem;border-radius:var(--radius);background:var(--card-alt);border:1px solid var(--border);font-size:.84rem;color:var(--text-muted);min-height:48px">
@@ -1644,6 +1650,35 @@ async function delConfirm(){
     libros=libros.filter(x=>x.id!==delId);
     cm('mdel');rCat();
   }catch(e){alert('Error al eliminar: '+e.message);}
+}
+
+// ── RECALCULAR DISPONIBLES ────────────────────────────────────────────────
+async function recalcularDisponibles(){
+  const log=document.getElementById('recalc-log');
+  log.textContent='⏳ Recalculando…';
+  try{
+    // Count active loans per book
+    const loanCounts={};
+    prestamos.filter(p=>p.estado==='activo').forEach(p=>{
+      loanCounts[p.libroId]=(loanCounts[p.libroId]||0)+1;
+    });
+    let updated=0;
+    const updates=[];
+    for(const l of libros){
+      const prestados=loanCounts[l.id]||0;
+      const correctDisp=Math.max(0,l.cantidad-prestados);
+      if(l.disponibles!==correctDisp){
+        l.disponibles=correctDisp;
+        updates.push(sbUpdate('libros',l.id,{disponibles:correctDisp}));
+        updated++;
+      }
+    }
+    await Promise.all(updates);
+    log.textContent=`✅ ${updated} libro(s) corregidos. Disponibles recalculados correctamente.`;
+    rStats();upHdr();
+  }catch(e){
+    log.textContent='❌ Error: '+e.message;
+  }
 }
 
 // ── IMPORTAR EXCEL ────────────────────────────────────────────────────────
