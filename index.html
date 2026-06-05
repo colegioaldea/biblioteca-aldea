@@ -224,8 +224,9 @@ tr:hover td{background:var(--card-alt)}
   align-items:flex-start;justify-content:center;
   padding:2rem 1rem;overflow-y:auto;
   backdrop-filter:blur(3px);
+  pointer-events:none;
 }
-.modal-overlay.abierto{display:flex}
+.modal-overlay.abierto{display:flex;pointer-events:all;}
 .modal{
   background:var(--card-bg);
   border:1px solid var(--border);
@@ -803,7 +804,7 @@ tr:hover td{background:var(--card-alt)}
 </div>
 
 <!-- ══ COMPROBANTE DE IMPRESIÓN (solo visible al imprimir) ══════════════ -->
-<div id="recibo-print" style="display:none">
+<div id="recibo-print" style="display:none;position:fixed;pointer-events:none">
   <div id="recibo-content"></div>
 </div>
 <div class="modal-overlay" id="mp-rep">
