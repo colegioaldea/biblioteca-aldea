@@ -1194,7 +1194,8 @@ function sortIcon(col){
   if(sortCol!==col) return '<span style="opacity:.3;font-size:.65rem">⇅</span>';
   return sortDir===1?'<span style="font-size:.65rem">▲</span>':'<span style="font-size:.65rem">▼</span>';
 }
-  document.querySelectorAll('.vista').forEach(v=>v.classList.remove('activa'));
+
+function sv(id,btn){
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
   document.getElementById('vista-'+id).classList.add('activa');
   if(btn) btn.classList.add('active');
@@ -2100,83 +2101,6 @@ function reimprimirComprobante(loanUid){
     obs:     p.obs||'',
     loanUid
   });
-}
-
-// ── COVER SYSTEM ─────────────────────────────────────────────────────────
-let coverCoverId=null; // book id currently being picked
-
-
-async function fetchCover(libro){
-  const {isbn,nombre,autor} = libro;
-  const queries=[];
-  if(isbn&&isbn!=='-'&&isbn.trim()) queries.push(`isbn:${isbn.trim()}`);
-  const q=[nombre,autor&&autor!=='-'?autor:''].filter(Boolean).join(' ').trim();
-  if(q) queries.push(q);
-
-  // 1. Google Books
-  for(const query of queries){
-    try{
-      const url=`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=1&fields=items(volumeInfo/imageLinks)`;
-      const res=await fetch(url);
-      if(!res.ok) continue;
-      const data=await res.json();
-      const img=data?.items?.[0]?.volumeInfo?.imageLinks;
-      if(img){
-        const cover=(img.extraLarge||img.large||img.medium||img.thumbnail||'')
-          .replace('http://','https://').replace('&edge=curl','');
-        if(cover) return cover;
-      }
-    }catch(e){}
-  }
-
-  // 2. Open Library fallback
-  const olCover=await fetchCoverOpenLibrary(isbn,nombre,autor);
-  if(olCover) return olCover;
-
-  return null;
-}
-
-async function runCoverQueue(){
-  if(coverRunning) return;
-  coverRunning=true;
-  const prog=document.getElementById('cover-progress');
-  const total=coverQueue.length;
-  let done=0;
-
-  while(coverQueue.length>0){
-    const libro=coverQueue.shift();
-    const current=libros.find(l=>l.id===libro.id);
-    if(!current||current.cover){done++;continue;}
-
-    const cover=await fetchCover(libro);
-    if(cover){
-      const l=libros.find(x=>x.id===libro.id);
-      if(l){l.cover=cover;sbUpdate('libros',l.id,{cover}).catch(()=>{});}
-    }
-    done++;
-    if(prog){
-      prog.style.display='block';
-      prog.textContent=`🖼 Buscando portadas… ${done}/${total}`;
-    }
-    await new Promise(r=>setTimeout(r,300));
-  }
-
-  coverRunning=false;
-  if(prog){
-    prog.textContent=`✅ Portadas completadas`;
-    setTimeout(()=>{prog.style.display='none';prog.textContent='';},3000);
-  }
-  if(vistaAct==='cat') rTabla();
-}
-
-function queueCoversForNew(nuevos){
-  // Clear any existing queue first to avoid accumulation
-  coverQueue=[];
-  // Only queue books without covers
-  const toFetch=nuevos.filter(l=>!l.cover);
-  if(!toFetch.length) return;
-  coverQueue.push(...toFetch);
-  setTimeout(runCoverQueue, 1500);
 }
 
 
