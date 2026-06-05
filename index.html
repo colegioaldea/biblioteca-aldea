@@ -789,25 +789,29 @@ tr:hover td{background:var(--card-alt)}
 <!-- ══ MODAL PORTADA ════════════════════════════════════════════════════ -->
 <div class="modal-overlay" id="mp-cov">
   <div class="modal" style="max-width:440px">
-    <h2>🖼 Portada del libro</h2>
+    <h2>🖼 Portada / Documento</h2>
     <p id="cov-title" style="font-size:.85rem;font-weight:700;color:var(--text-secondary);margin-bottom:1rem"></p>
 
     <!-- Current preview -->
     <div style="display:flex;justify-content:center;margin-bottom:1rem">
       <img id="cov-preview" style="display:none;width:100px;height:140px;object-fit:cover;border-radius:var(--radius);border:2px solid var(--gold);box-shadow:0 4px 12px rgba(0,0,0,.1)">
+      <div id="cov-pdf-preview" style="display:none;width:100px;height:140px;background:var(--danger-bg);border:2px solid var(--danger);border-radius:var(--radius);display:none;align-items:center;justify-content:center;flex-direction:column;gap:.3rem;cursor:pointer" onclick="openCoverPdf()">
+        <span style="font-size:2rem">📄</span>
+        <span style="font-size:.68rem;color:var(--danger);font-weight:700;text-align:center">PDF adjunto<br>Clic para abrir</span>
+      </div>
       <div id="cov-placeholder" style="width:100px;height:140px;background:var(--card-alt);border:2px dashed var(--border);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:2rem">📖</div>
     </div>
 
     <!-- Upload from device -->
     <div class="fi" style="margin-bottom:.8rem">
-      <label>📁 Subir imagen desde tu dispositivo</label>
-      <input type="file" id="cov-file" accept="image/*" onchange="onCoverFileChange(this)"
+      <label>📁 Subir imagen o PDF desde tu dispositivo</label>
+      <input type="file" id="cov-file" accept="image/*,.pdf" onchange="onCoverFileChange(this)"
         style="padding:.45rem;border:1.5px solid var(--border);border-radius:var(--radius);font-size:.83rem;background:#fff">
     </div>
 
     <!-- Or paste URL -->
     <div class="fi" style="margin-bottom:.5rem">
-      <label>🔗 O pegar URL de imagen</label>
+      <label>🔗 O pegar URL de imagen o PDF</label>
       <div style="display:flex;gap:.5rem">
         <input id="cov-url" placeholder="https://…" oninput="previewCustomCover()" style="flex:1">
       </div>
@@ -816,7 +820,7 @@ tr:hover td{background:var(--card-alt)}
     <div class="mf">
       <button class="btn btn-ghost" onclick="cm('mp-cov')">Cancelar</button>
       <button class="btn btn-danger" onclick="removeCover()">🗑 Sin portada</button>
-      <button class="btn btn-primary" onclick="saveCover()">Guardar portada</button>
+      <button class="btn btn-primary" onclick="saveCover()">Guardar</button>
     </div>
   </div>
 </div>
@@ -1286,8 +1290,11 @@ function rTabla(){
     const d=arch?'agot':l.disponibles===0?'agot':l.disponibles<l.cantidad?'prest':'disp';
     const dt=arch?'Archivado':l.disponibles===0?'Agotado':l.disponibles<l.cantidad?`${l.disponibles}/${l.cantidad} disp.`:'Disponible';
     const rowStyle=arch?'opacity:.45;':'';
+    const isPdfCover=l.cover&&(l.cover.startsWith('data:application/pdf')||l.cover.toLowerCase().includes('.pdf'));
     const thumb=l.cover
-      ? `<img src="${esc(l.cover)}" style="width:32px;height:44px;object-fit:cover;border-radius:3px;border:1px solid var(--border);cursor:pointer${arch?';filter:grayscale(1)':''}" onclick="oCover(${l.id})">`
+      ? isPdfCover
+        ? `<div onclick="window.open('${esc(l.cover)}','_blank')" style="width:32px;height:44px;background:var(--danger-bg);border:1px solid var(--danger);border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem" title="Ver PDF">📄</div>`
+        : `<img src="${esc(l.cover)}" style="width:32px;height:44px;object-fit:cover;border-radius:3px;border:1px solid var(--border);cursor:pointer${arch?';filter:grayscale(1)':''}" onclick="oCover(${l.id})">`
       : `<button onclick="oCover(${l.id})" style="font-size:.65rem;padding:.2rem .4rem;background:var(--card-alt);border:1px dashed var(--border);border-radius:4px;cursor:pointer;color:var(--text-muted)">🖼</button>`;
     return `<tr style="${rowStyle}">
       <td style="color:var(--text-muted);font-size:.74rem">${esc(l.num)}</td>
@@ -1849,7 +1856,7 @@ function buscarLibro(){
   const el=document.getElementById('bus-res');
   if(!hayFiltro){el.innerHTML='';return;}
   const res=libros.filter(l=>{
-    if(vals.num&&!String(l.num||'').toLowerCase().includes(vals.num))return false;
+    if(vals.num&&String(l.num||'').toLowerCase()!==vals.num)return false;
     if(vals.nombre&&!String(l.nombre||'').toLowerCase().includes(vals.nombre))return false;
     if(vals.area&&!String(l.area||'').toLowerCase().includes(vals.area))return false;
     if(vals.autor&&!String(l.autor||'').toLowerCase().includes(vals.autor))return false;
@@ -1871,7 +1878,11 @@ function buscarLibro(){
     const arch=l.archivado;
     return `<div class="bus-result-card${disp?'':' no-disp'}" style="${arch?'opacity:.5;':''}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.8rem;flex-wrap:wrap">
-        ${l.cover?`<img src="${esc(l.cover)}" style="width:52px;height:72px;object-fit:cover;border-radius:4px;border:1px solid var(--border);flex-shrink:0${arch?';filter:grayscale(1)':''}" onerror="this.style.display='none'">`:'<div style="width:52px;height:72px;background:var(--card-alt);border:1px dashed var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">📖</div>'}
+        ${l.cover
+          ? l.cover.startsWith('data:application/pdf')||l.cover.toLowerCase().includes('.pdf')
+            ? `<div onclick="window.open('${esc(l.cover)}','_blank')" style="width:52px;height:72px;background:var(--danger-bg);border:2px solid var(--danger);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.2rem;cursor:pointer;flex-shrink:0"><span style="font-size:1.5rem">📄</span><span style="font-size:.6rem;color:var(--danger);font-weight:700">PDF</span></div>`
+            : `<img src="${esc(l.cover)}" style="width:52px;height:72px;object-fit:cover;border-radius:4px;border:1px solid var(--border);flex-shrink:0${arch?';filter:grayscale(1)':''}" onerror="this.style.display='none'">`
+          : `<div style="width:52px;height:72px;background:var(--card-alt);border:1px dashed var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">📖</div>`}
         <div style="flex:1;min-width:160px">
           <div style="font-weight:800;font-size:.95rem;color:var(--text-primary);font-family:'Nunito',sans-serif">${esc(l.nombre)}</div>
           ${l.autor&&l.autor!=='-'?`<div style="font-size:.8rem;color:var(--text-muted);margin-top:.15rem">Autor: ${esc(l.autor)}</div>`:''}
@@ -2183,11 +2194,32 @@ function oCover(id){
   document.getElementById('cov-title').textContent=`📖 ${l.nombre}${l.autor&&l.autor!=='-'?' — '+l.autor:''}`;
   document.getElementById('cov-url').value=l.cover||'';
   document.getElementById('cov-file').value='';
-  const prev=document.getElementById('cov-preview');
-  const ph=document.getElementById('cov-placeholder');
-  if(l.cover){prev.src=l.cover;prev.style.display='block';if(ph)ph.style.display='none';}
-  else{prev.src='';prev.style.display='none';if(ph)ph.style.display='flex';}
+  showCoverPreview(l.cover||'');
   document.getElementById('mp-cov').classList.add('abierto');
+}
+
+function isPdf(src){return src&&(src.startsWith('data:application/pdf')||src.toLowerCase().includes('.pdf'))}
+
+function showCoverPreview(src){
+  const prev=document.getElementById('cov-preview');
+  const pdfPrev=document.getElementById('cov-pdf-preview');
+  const ph=document.getElementById('cov-placeholder');
+  prev.style.display='none';
+  pdfPrev.style.display='none';
+  ph.style.display='none';
+  if(!src){
+    ph.style.display='flex';
+  } else if(isPdf(src)){
+    pdfPrev.style.display='flex';
+    pdfPrev._pdfSrc=src;
+  } else {
+    prev.src=src;prev.style.display='block';
+  }
+}
+
+function openCoverPdf(){
+  const src=document.getElementById('cov-pdf-preview')._pdfSrc;
+  if(src) window.open(src,'_blank');
 }
 
 function onCoverFileChange(input){
@@ -2196,10 +2228,7 @@ function onCoverFileChange(input){
   reader.onload=e=>{
     const src=e.target.result;
     document.getElementById('cov-url').value=src;
-    const prev=document.getElementById('cov-preview');
-    const ph=document.getElementById('cov-placeholder');
-    prev.src=src;prev.style.display='block';
-    if(ph)ph.style.display='none';
+    showCoverPreview(src);
   };
   reader.readAsDataURL(file);
 }
@@ -2207,10 +2236,7 @@ function onCoverFileChange(input){
 function previewCustomCover(){
   const src=document.getElementById('cov-url').value.trim();
   if(!src)return;
-  const prev=document.getElementById('cov-preview');
-  const ph=document.getElementById('cov-placeholder');
-  prev.src=src;prev.style.display='block';
-  if(ph)ph.style.display='none';
+  showCoverPreview(src);
 }
 
 async function saveCover(){
