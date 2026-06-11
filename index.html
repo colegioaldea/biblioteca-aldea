@@ -210,7 +210,7 @@ th{
   position:sticky;top:0;z-index:5;background:var(--brown-header);
 }
 td{
-  padding:.6rem .85rem;
+  padding:.35rem .7rem;
   border-bottom:1px solid var(--border);
   vertical-align:middle;max-width:180px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
@@ -464,7 +464,36 @@ tr:hover td{background:var(--card-alt)}
   .bus-table .lbl{font-size:.73rem;padding:.4rem .55rem}
 }
 
-/* ── PRINT STYLES ────────────────────────────────────────────────────────── */
+/* ── DESCRIPTION CELL HOVER ──────────────────────────────────────────────── */
+.desc-cell{cursor:default}
+.desc-cell:hover::after{
+  content:attr(title);
+  position:fixed;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:.5rem .75rem;
+  font-size:.78rem;
+  color:var(--text-primary);
+  box-shadow:0 4px 16px rgba(0,0,0,.15);
+  max-width:320px;
+  white-space:normal;
+  line-height:1.6;
+  z-index:999;
+  pointer-events:none;
+  transform:translateY(1.5rem);
+}
+
+/* ── ACTION MENU ─────────────────────────────────────────────────────────── */
+.act-wrap{position:relative;display:inline-block}
+.act-btn{padding:.22rem .55rem;font-size:.78rem;cursor:pointer;background:var(--card-alt);border:1px solid var(--border);border-radius:var(--radius);font-family:'Nunito Sans',sans-serif;color:var(--text-secondary);white-space:nowrap}
+.act-btn:hover{background:var(--gold);color:var(--text-on-gold);border-color:var(--gold)}
+.act-menu{display:none;position:fixed;background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:500;min-width:150px;overflow:hidden}
+.act-menu.open{display:block}
+.act-menu button{display:block;width:100%;padding:.5rem .9rem;text-align:left;background:none;border:none;cursor:pointer;font-size:.82rem;font-family:'Nunito Sans',sans-serif;color:var(--text-primary);white-space:nowrap}
+.act-menu button:hover{background:var(--surface-hover)}
+.act-menu button.danger{color:var(--danger)}
+.act-menu hr{border:none;border-top:1px solid var(--border);margin:.2rem 0}
 @media print{
   body > *:not(#recibo-print){display:none!important}
   #recibo-print{display:block!important}
@@ -551,6 +580,7 @@ tr:hover td{background:var(--card-alt)}
     <select id="fa" onchange="buscar()"><option value="">Todas las categorías</option></select>
     <select id="fs" onchange="buscar()"><option value="">Todas las salas</option></select>
     <select id="fe" onchange="buscar()"><option value="">Todos los estados</option><option value="disp">Disponible</option><option value="prest">Prestado</option><option value="arch">Archivados</option><option value="noarch">Activos (sin archivados)</option></select>
+    <button class="btn btn-ghost" onclick="exportarExcel()" title="Exportar a Excel">📊 Excel</button>
   </div>
   <div id="pt" class="pag"></div>
   <div class="tbl-wrap">
@@ -1228,6 +1258,42 @@ function sv(id,btn){
 }
 
 
+// ── ACTION MENU ───────────────────────────────────────────────────────────
+function toggleActMenu(btn){
+  const menu=btn.nextElementSibling;
+  const isOpen=menu.classList.contains('open');
+  closeActMenus();
+  if(!isOpen){
+    const rect=btn.getBoundingClientRect();
+    menu.style.top=(rect.bottom+4)+'px';
+    menu.style.left=Math.min(rect.left, window.innerWidth-160)+'px';
+    menu.classList.add('open');
+  }
+}
+function closeActMenus(){
+  document.querySelectorAll('.act-menu.open').forEach(m=>m.classList.remove('open'));
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.act-wrap')) closeActMenus();
+});
+
+// ── EXCEL EXPORT ──────────────────────────────────────────────────────────
+function exportarExcel(){
+  const data=fil.map(l=>({
+    'NUM':l.num,'Grado':l.grado,'Nombre':l.nombre,'Autor':l.autor,
+    'Categoría':l.area,'Vol':l.vol,'Formato':l.formato,
+    'Descripción':l.desc,'Editorial':l.editorial,'Colección':l.coleccion,
+    'ISBN':l.isbn,'Observación':l.obs,'Ubicación':l.ubicacion,'Sala':l.sala,
+    'Cantidad':l.cantidad,'Disponibles':l.disponibles,
+    'Estado':l.archivado?'Archivado':l.disponibles===0?'Agotado':l.disponibles<l.cantidad?'Prestado':'Disponible'
+  }));
+  const ws=XLSX.utils.json_to_sheet(data);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Catálogo');
+  const fecha=new Date().toISOString().split('T')[0];
+  XLSX.writeFile(wb,`Catalogo_Aldea_${fecha}.xlsx`);
+}
+
 // ── CATÁLOGO ──────────────────────────────────────────────────────────────
 function popFiltros(){
   const sf=document.getElementById('ff'),sa=document.getElementById('fa'),ss=document.getElementById('fs');
@@ -1308,7 +1374,7 @@ function rTabla(){
       <td>${esc(l.area||'−')}</td>
       <td>${esc(l.vol||'−')}</td>
       <td><span class="chip">${esc(l.formato||'−')}</span></td>
-      <td style="font-size:.75rem" title="${esc(l.desc)}">${esc((l.desc||'').substring(0,45))}${(l.desc||'').length>45?'…':''}</td>
+      <td style="font-size:.75rem;max-width:200px;white-space:normal;position:relative" class="desc-cell" title="${esc(l.desc)}">${esc((l.desc||'').substring(0,45))}${(l.desc||'').length>45?'…':''}</td>
       <td>${esc(l.editorial||'−')}</td>
       <td style="font-size:.75rem">${esc(l.coleccion||'−')}</td>
       <td style="font-size:.72rem">${esc(l.isbn||'−')}</td>
@@ -1316,12 +1382,19 @@ function rTabla(){
       <td style="font-size:.75rem">${esc(l.ubicacion||'−')}</td>
       <td style="font-size:.75rem">${esc(l.sala||'−')}</td>
       <td><span class="badge bd-${d}">${dt}</span></td>
-      <td><div style="display:flex;gap:.3rem;flex-wrap:wrap">
-        ${!arch?`<button class="btn btn-primary" style="padding:.25rem .6rem;font-size:.72rem" onclick="opre(${l.id})" ${l.disponibles===0?'disabled':''}>Prestar</button>`:''}
-        <button class="btn btn-ghost" style="padding:.25rem .6rem;font-size:.72rem" onclick="oedit(${l.id})">Editar</button>
-        <button class="btn btn-ghost" style="padding:.25rem .6rem;font-size:.72rem;color:${arch?'var(--success)':'var(--text-muted)'}" onclick="toggleArchivar(${l.id})">${arch?'↩ Activar':'📦 Archivar'}</button>
-        <button class="btn btn-danger" style="padding:.25rem .55rem;font-size:.72rem" onclick="del(${l.id})">✕</button>
-      </div></td>
+      <td>
+        <div class="act-wrap">
+          <button class="act-btn" onclick="toggleActMenu(this)">⋯</button>
+          <div class="act-menu">
+            ${!arch?`<button onclick="closeActMenus();opre(${l.id})" ${l.disponibles===0?'disabled style="opacity:.4;cursor:default"':''}>📤 Prestar</button>`:''}
+            <button onclick="closeActMenus();oedit(${l.id})">✏️ Editar</button>
+            <button onclick="closeActMenus();oCover(${l.id})">🖼 Portada</button>
+            <button onclick="closeActMenus();toggleArchivar(${l.id})">${arch?'↩ Activar':'📦 Archivar'}</button>
+            <hr>
+            <button class="danger" onclick="closeActMenus();del(${l.id})">🗑 Eliminar</button>
+          </div>
+        </div>
+      </td>
     </tr>`;
   }).join('');
   rPag(tot);
