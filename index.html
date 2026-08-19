@@ -1541,7 +1541,15 @@ function fp(){
     html+=`<div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--info);margin:.4rem 0 .4rem;font-family:'Nunito',sans-serif">
       📋 Solicitudes pendientes (${pendientes.length})</div>`;
     html+=pendientes.map(p=>{
-      const libro=libros.find(x=>x.id===p.libroId);
+      const libro=libros.find(x=>String(x.id)===String(p.libroId));
+      const pSala=libro&&libro.sala&&libro.sala!=='-'?libro.sala:'';
+      const pUbic=libro&&libro.ubicacion&&libro.ubicacion!=='-'?libro.ubicacion:'';
+      const ubicHtml=(pSala||pUbic)
+        ? `<div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.4rem">
+            ${pSala?`<span class="chip">🏠 Sala: ${esc(pSala)}</span>`:''}
+            ${pUbic?`<span class="chip">📍 Ubicación: ${esc(pUbic)}</span>`:''}
+          </div>`
+        : `<div style="font-size:.72rem;color:var(--text-muted);margin-top:.4rem">📍 Sala / Ubicación no registrada</div>`;
       return `
       <div class="pc" style="border-left:3px solid var(--info);background:#F0F7FF">
         <div style="flex:1;min-width:180px">
@@ -1549,7 +1557,7 @@ function fp(){
           ${p.libroArea&&p.libroArea!=='-'?`<div style="font-size:.75rem;color:var(--text-muted)">${esc(p.libroArea)}</div>`:''}
           <div style="font-size:.82rem;margin-top:.3rem;color:var(--text-secondary)"><strong style="color:var(--text-primary)">Solicitante:</strong> ${esc(p.lector)}${p.contacto?' · '+esc(p.contacto):''}</div>
           <div style="font-size:.75rem;color:var(--text-muted);margin-top:.15rem">Solicitado: ${fmtF(p.fechaSolicitud)}</div>
-          ${libro&&(libro.ubicacion||libro.sala)?`<div style="font-size:.75rem;margin-top:.3rem;color:var(--info);font-weight:600">📍 ${[libro.sala,libro.ubicacion].filter(x=>x&&x!=='-').join(' · ')}</div>`:''}
+          ${ubicHtml}
         </div>
         <button class="btn btn-info" onclick="oAprobar('${p.uid}')">✅ Aprobar</button>
       </div>`}).join('');
@@ -1886,9 +1894,7 @@ function buildBusForm(){
     ['b-num','Num.','text'],['b-nombre','Nombre','text'],['b-area','Categoría','select'],
     ['b-autor','Autor','text'],['b-vol','Vol','text'],['b-fmt','Formato','select'],
     ['b-desc','Descripción','text'],['b-ed','Editorial','select'],['b-col','Colección','select'],
-    ['b-obs','Observación','text'],
-['b-sala','Sala','text'],
-['b-ubic','Ubicación','text']
+    ['b-obs','Observación','text']
   ];
   const ROW='display:flex;border-bottom:1px solid #E8E0D5';
   const LBL='background:#FEF5CC;color:#7A5E00;font-weight:800;font-family:Nunito,sans-serif;font-size:.85rem;padding:.6rem 1rem;text-align:right;width:160px;min-width:160px;display:flex;align-items:center;justify-content:flex-end;flex-shrink:0;border-right:1px solid #E8E0D5';
@@ -1939,8 +1945,6 @@ function buscarLibro(){
     ed:document.getElementById('b-ed').value.trim().toLowerCase(),
     col:document.getElementById('b-col').value.trim().toLowerCase(),
     obs:document.getElementById('b-obs').value.trim().toLowerCase(),
-sala:document.getElementById('b-sala').value.trim().toLowerCase(),
-ubic:document.getElementById('b-ubic').value.trim().toLowerCase(),
   };
   const hayFiltro=Object.values(vals).some(v=>v);
   const el=document.getElementById('bus-res');
@@ -1956,8 +1960,6 @@ ubic:document.getElementById('b-ubic').value.trim().toLowerCase(),
     if(vals.ed&&!String(l.editorial||'').toLowerCase().includes(vals.ed))return false;
     if(vals.col&&!String(l.coleccion||'').toLowerCase().includes(vals.col))return false;
     if(vals.obs&&!String(l.obs||'').toLowerCase().includes(vals.obs))return false;
-if(vals.sala&&!String(l.sala||'').toLowerCase().includes(vals.sala))return false;
-if(vals.ubic&&!String(l.ubicacion||'').toLowerCase().includes(vals.ubic))return false;
     return true;
   });
   if(!res.length){
@@ -1983,7 +1985,6 @@ if(vals.ubic&&!String(l.ubicacion||'').toLowerCase().includes(vals.ubic))return 
             ${l.grado?`<span>Grado: <strong style="color:var(--gold)">${esc(l.grado)}</strong></span>`:''}
             ${l.area?`<span>Categoría: <strong style="color:var(--text-secondary)">${esc(l.area)}</strong></span>`:''}
             ${l.formato?`<span>Formato: <strong style="color:var(--text-secondary)">${esc(l.formato)}</strong></span>`:''}
-            ${l.sala?`<span>Sala: <strong style="color:var(--text-secondary)">${esc(l.sala)}</strong></span>`:''}
           </div>
           ${l.editorial?`<div style="font-size:.75rem;color:var(--text-muted);margin-top:.2rem">Editorial: ${esc(l.editorial)}${l.coleccion?' · '+esc(l.coleccion):''}</div>`:''}
           ${l.desc?`<div style="margin-top:.45rem">
@@ -2011,7 +2012,7 @@ function toggleDesc(id){
 }
 
 function busLimpiar(){
-  ['b-num','b-nombre','b-autor','b-vol','b-desc','b-obs','b-sala','b-ubic'].forEach(id=>{
+  ['b-num','b-nombre','b-autor','b-vol','b-desc','b-obs'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.value='';
   });
   ['b-area','b-fmt','b-ed','b-col'].forEach(id=>{
