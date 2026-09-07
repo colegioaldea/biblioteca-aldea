@@ -1,4 +1,4 @@
-name: Keep Repo Active
+name: Keep Supabase Alive
 
 on:
   schedule:
@@ -6,21 +6,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  keep-alive:
+  ping:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Update timestamp
-        run: echo "Last run $(date -u)" > ping-log.txt
-
-      - name: Commit
+      - name: Ping Supabase
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add ping-log.txt
-          git diff --staged --quiet || git commit -m "chore: keep-alive $(date -u +%Y-%m-%d)"
-          git push
+          curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1sYnBqYmhldWdmcWJmZnh1dGFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNTgwMzksImV4cCI6MjA5NTkzNDAzOX0.vFoIEfOctQV8VkWH7aJU9YbDaU7GrgFSG9c0IpL7H1c" \
+            -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1sYnBqYmhldWdmcWJmZnh1dGFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNTgwMzksImV4cCI6MjA5NTkzNDAzOX0.vFoIEfOctQV8VkWH7aJU9YbDaU7GrgFSG9c0IpL7H1c" \
+            "https://mlbpjbheugfqbffxutaf.supabase.co/rest/v1/libros?select=id&limit=1"
