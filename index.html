@@ -600,6 +600,7 @@ tr:hover td{background:var(--card-alt)}
       <th>ISBN</th><th>Observación</th>
       <th onclick="sortBy('ubicacion')" style="cursor:pointer">Ubicación <span id="si-ubicacion"></span></th>
       <th onclick="sortBy('sala')" style="cursor:pointer">Sala <span id="si-sala"></span></th>
+      <th onclick="sortBy('cantidad')" style="cursor:pointer">Cant. <span id="si-cantidad"></span></th>
       <th>Estado</th><th>Acciones</th>
     </tr></thead>
     <tbody id="tb"></tbody>
@@ -1285,7 +1286,7 @@ function exportarExcel(){
     'Categoría':l.area,'Vol':l.vol,'Formato':l.formato,
     'Descripción':l.desc,'Editorial':l.editorial,'Colección':l.coleccion,
     'ISBN':l.isbn,'Observación':l.obs,'Ubicación':l.ubicacion,'Sala':l.sala,
-    'Cantidad':l.cantidad,'Disponibles':l.disponibles,
+    'Cant.':l.cantidad,'Disponibles':l.disponibles,
     'Estado':l.archivado?'Archivado':l.disponibles===0?'Agotado':l.disponibles<l.cantidad?'Prestado':'Disponible'
   }));
   const ws=XLSX.utils.json_to_sheet(data);
@@ -1340,15 +1341,15 @@ function rTabla(){
   if(!fil.length){tb.innerHTML='';nr.style.display='block';document.getElementById('pt').innerHTML='';document.getElementById('pb').innerHTML='';return}
   nr.style.display='none';
   // Update sort icons
-  ['num','grado','nombre','autor','area','vol','editorial','coleccion','ubicacion','sala'].forEach(c=>{
+  ['num','grado','nombre','autor','area','vol','editorial','coleccion','ubicacion','sala','cantidad'].forEach(c=>{
     const el=document.getElementById('si-'+c);if(el)el.innerHTML=sortIcon(c);
   });
   // Apply sort
   let sorted=[...fil];
   if(sortCol){
     sorted.sort((a,b)=>{
-      if(sortCol==='num'){
-        const an=parseFloat(a.num)||0, bn=parseFloat(b.num)||0;
+      if(sortCol==='num'||sortCol==='cantidad'){
+        const an=parseFloat(a[sortCol])||0, bn=parseFloat(b[sortCol])||0;
         return (an-bn)*sortDir;
       }
       return String(a[sortCol]||'').toLowerCase().localeCompare(String(b[sortCol]||'').toLowerCase(),'es')*sortDir;
@@ -1382,6 +1383,7 @@ function rTabla(){
       <td style="font-size:.72rem" title="${esc(l.obs)}">${esc((l.obs||'').substring(0,30))}${(l.obs||'').length>30?'…':''}</td>
       <td style="font-size:.75rem">${esc(l.ubicacion||'−')}</td>
       <td style="font-size:.75rem">${esc(l.sala||'−')}</td>
+      <td style="text-align:center;font-size:.75rem;font-weight:700;color:${l.cantidad>1?'var(--info)':'var(--text-muted)'}">${l.cantidad||1}</td>
       <td><span class="badge bd-${d}">${dt}</span></td>
       <td>
         <div class="act-wrap">
